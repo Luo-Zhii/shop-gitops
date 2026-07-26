@@ -1,0 +1,221 @@
+# =============================================================================
+# Grafana Dashboards — Custom Dashboards cho ShopNow
+# =============================================================================
+# Các dashboard này được auto-load vào Grafana qua sidecar container.
+# Mỗi ConfigMap cần label: grafana_dashboard: "1"
+#
+# Dashboards:
+#   1. ShopNow Overview — Tổng quan tất cả microservices
+#   2. Spring Boot Statistics — JVM metrics, HTTP requests, DB connections
+#   3. Kubernetes Pod Resources — CPU, Memory, Network cho ShopNow pods
+# =============================================================================
+
+---
+# ===== Dashboard 1: ShopNow Microservices Overview =====
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-shopnow-overview
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+    app: grafana
+data:
+  shopnow-overview.json: |
+    {
+      "title": "ShopNow — Microservices Overview",
+      "uid": "shopnow-overview",
+      "tags": ["shopnow", "microservices"],
+      "panels": [
+        {
+          "title": "HTTP Requests/sec",
+          "type": "graph",
+          "targets": [
+            {
+              "expr": "sum(rate(http_server_requests_seconds_count{namespace=\"shopnow\"}[5m])) by (service)",
+              "legendFormat": "{{service}}"
+            }
+          ]
+        },
+        {
+          "title": "JVM Memory Used (MB)",
+          "type": "graph",
+          "targets": [
+            {
+              "expr": "sum(jvm_memory_used_bytes{namespace=\"shopnow\"}) by (service) / 1048576",
+              "legendFormat": "{{service}}"
+            }
+          ]
+        },
+        {
+          "title": "Service Status (UP=1, DOWN=0)",
+          "type": "stat",
+          "targets": [
+            {
+              "expr": "up{namespace=\"shopnow\"}",
+              "legendFormat": "{{service}}"
+            }
+          ]
+        },
+        {
+          "title": "Error Rate (5xx %)",
+          "type": "graph",
+          "targets": [
+            {
+              "expr": "sum(rate(http_server_requests_seconds_count{namespace=\"shopnow\",status=~\"5..\"}[5m])) by (service) / sum(rate(http_server_requests_seconds_count{namespace=\"shopnow\"}[5m])) by (service) * 100",
+              "legendFormat": "{{service}}"
+            }
+          ]
+        },
+        {
+          "title": "Average Response Time (ms)",
+          "type": "graph",
+          "targets": [
+            {
+              "expr": "sum(rate(http_server_requests_seconds_sum{namespace=\"shopnow\"}[5m])) by (service) / sum(rate(http_server_requests_seconds_count{namespace=\"shopnow\"}[5m])) by (service) * 1000",
+              "legendFormat": "{{service}}"
+            }
+          ]
+        }
+      ]
+    }
+
+---
+# ===== Dashboard 2: Spring Boot Statistics =====
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-spring-boot
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+    app: grafana
+data:
+  spring-boot-stats.json: |
+    {
+      "title": "Spring Boot — JVM & Application Metrics",
+      "uid": "spring-boot-stats",
+      "tags": ["shopnow", "spring-boot"],
+      "panels": [
+        {
+          "title": "JVM Heap Usage",
+          "type": "graph",
+          "targets": [
+            {
+              "expr": "jvm_memory_used_bytes{area=\"heap\",namespace=\"shopnow\"} / jvm_memory_max_bytes{area=\"heap\",namespace=\"shopnow\"} * 100",
+              "legendFormat": "{{service}} - {{id}}"
+            }
+          ]
+        },
+        {
+          "title": "GC Pause Time (ms)",
+          "type": "graph",
+          "targets": [
+            {
+              "expr": "rate(jvm_gc_pause_seconds_sum{namespace=\"shopnow\"}[5m]) * 1000",
+              "legendFormat": "{{service}} - {{action}}"
+            }
+          ]
+        },
+        {
+          "title": "Active Threads",
+          "type": "graph",
+          "targets": [
+            {
+              "expr": "jvm_threads_live_threads{namespace=\"shopnow\"}",
+              "legendFormat": "{{service}}"
+            }
+          ]
+        },
+        {
+          "title": "DB Connection Pool Active",
+          "type": "graph",
+          "targets": [
+            {
+              "expr": "hikaricp_connections_active{namespace=\"shopnow\"}",
+              "legendFormat": "{{service}} - {{pool}}"
+            }
+          ]
+        },
+        {
+          "title": "HTTP 4xx Error Rate",
+          "type": "graph",
+          "targets": [
+            {
+              "expr": "sum(rate(http_server_requests_seconds_count{namespace=\"shopnow\",status=~\"4..\"}[5m])) by (service)",
+              "legendFormat": "{{service}}"
+            }
+          ]
+        }
+      ]
+    }
+
+---
+# ===== Dashboard 3: K8s Pod Resources =====
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-pod-resources
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+    app: grafana
+data:
+  pod-resources.json: |
+    {
+      "title": "ShopNow — K8s Pod Resources",
+      "uid": "shopnow-pod-resources",
+      "tags": ["shopnow", "kubernetes"],
+      "panels": [
+        {
+          "title": "CPU Usage (cores)",
+          "type": "graph",
+          "targets": [
+            {
+              "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"shopnow\",container!=\"\"}[5m])) by (pod)",
+              "legendFormat": "{{pod}}"
+            }
+          ]
+        },
+        {
+          "title": "Memory Usage (MB)",
+          "type": "graph",
+          "targets": [
+            {
+              "expr": "sum(container_memory_working_set_bytes{namespace=\"shopnow\",container!=\"\"}) by (pod) / 1048576",
+              "legendFormat": "{{pod}}"
+            }
+          ]
+        },
+        {
+          "title": "Network Receive (bytes/s)",
+          "type": "graph",
+          "targets": [
+            {
+              "expr": "sum(rate(container_network_receive_bytes_total{namespace=\"shopnow\"}[5m])) by (pod)",
+              "legendFormat": "{{pod}}"
+            }
+          ]
+        },
+        {
+          "title": "Network Transmit (bytes/s)",
+          "type": "graph",
+          "targets": [
+            {
+              "expr": "sum(rate(container_network_transmit_bytes_total{namespace=\"shopnow\"}[5m])) by (pod)",
+              "legendFormat": "{{pod}}"
+            }
+          ]
+        },
+        {
+          "title": "Pod Restarts",
+          "type": "stat",
+          "targets": [
+            {
+              "expr": "kube_pod_container_status_restarts_total{namespace=\"shopnow\"}",
+              "legendFormat": "{{pod}}"
+            }
+          ]
+        }
+      ]
+    }

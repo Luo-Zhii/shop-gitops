@@ -1,0 +1,63 @@
+# =============================================================================
+# ArgoCD Ingress — Expose ArgoCD UI qua Ingress NGINX
+# =============================================================================
+# Cho phép truy cập ArgoCD Web UI qua domain: https://argocd.luo.io.vn
+#
+# Lưu ý: ArgoCD cần cấu hình --insecure flag để chấp nhận HTTP từ Ingress
+# (ArgoCD Server mặc định redirect HTTP → HTTPS, cần disable)
+# =============================================================================
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: argocd-server-ingress
+  namespace: argocd
+  annotations:
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: argocd.luo.io.vn
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: argocd-server
+                port:
+                  number: 443
+---
+# =============================================================================
+# Hoặc dùng cách đơn giản hơn: disable HTTPS trên ArgoCD server
+# để Ingress xử lý TLS termination:
+# =============================================================================
+# Chạy lệnh sau để ArgoCD chấp nhận HTTP từ Ingress:
+#   kubectl patch configmap argocd-cmd-params-cm -n argocd \
+#     -p '{"data":{"server.insecure":"true"}}'
+#
+# Sau đó dùng Ingress HTTP thay vì SSL passthrough:
+# ---
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   name: argocd-server-ingress
+#   namespace: argocd
+#   annotations:
+#     nginx.ingress.kubernetes.io/ssl-redirect: "true"
+#     nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+# spec:
+#   ingressClassName: nginx
+#   rules:
+#     - host: argocd.luo.io.vn
+#       http:
+#         paths:
+#           - path: /
+#             pathType: Prefix
+#             backend:
+#               service:
+#                 name: argocd-server
+#                 port:
+#                   number: 80

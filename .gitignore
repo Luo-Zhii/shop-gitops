@@ -1,0 +1,13 @@
+# Kustomize
+*.lock
+
+# Kubeconfig
+*.kubeconfig
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temp
+*.tmp
+*.swp

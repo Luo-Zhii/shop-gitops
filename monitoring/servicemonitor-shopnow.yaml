@@ -1,0 +1,185 @@
+# =============================================================================
+# ServiceMonitors — ShopNow Microservices (Spring Boot Actuator)
+# =============================================================================
+# Prometheus sẽ tự động scrape metrics từ Spring Boot Actuator endpoints.
+# Yêu cầu: Mỗi Spring Boot service phải có dependency:
+#   - spring-boot-starter-actuator
+#   - micrometer-registry-prometheus
+#
+# Endpoint mặc định: /actuator/prometheus
+# =============================================================================
+
+# --- API Gateway ServiceMonitor ---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: api-gateway
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+    app: shopnow
+spec:
+  selector:
+    matchLabels:
+      app: api-gateway
+  namespaceSelector:
+    matchNames:
+      - shopnow
+  endpoints:
+    - port: http
+      path: /actuator/prometheus
+      interval: 30s
+      scrapeTimeout: 10s
+---
+# --- Discovery Server ServiceMonitor ---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: discovery-server
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+    app: shopnow
+spec:
+  selector:
+    matchLabels:
+      app: discovery-server
+  namespaceSelector:
+    matchNames:
+      - shopnow
+  endpoints:
+    - port: http
+      path: /actuator/prometheus
+      interval: 30s
+      scrapeTimeout: 10s
+---
+# --- Config Server ServiceMonitor ---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: config-server
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+    app: shopnow
+spec:
+  selector:
+    matchLabels:
+      app: config-server
+  namespaceSelector:
+    matchNames:
+      - shopnow
+  endpoints:
+    - port: http
+      path: /actuator/prometheus
+      interval: 30s
+      scrapeTimeout: 10s
+---
+# --- Product Service ServiceMonitor ---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: product-service
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+    app: shopnow
+spec:
+  selector:
+    matchLabels:
+      app: product-service
+  namespaceSelector:
+    matchNames:
+      - shopnow
+  endpoints:
+    - port: http
+      path: /actuator/prometheus
+      interval: 30s
+      scrapeTimeout: 10s
+---
+# --- Shopping Cart Service ServiceMonitor ---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: shopping-cart-service
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+    app: shopnow
+spec:
+  selector:
+    matchLabels:
+      app: shopping-cart-service
+  namespaceSelector:
+    matchNames:
+      - shopnow
+  endpoints:
+    - port: http
+      path: /actuator/prometheus
+      interval: 30s
+      scrapeTimeout: 10s
+---
+# --- User Service ServiceMonitor ---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: user-service
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+    app: shopnow
+spec:
+  selector:
+    matchLabels:
+      app: user-service
+  namespaceSelector:
+    matchNames:
+      - shopnow
+  endpoints:
+    - port: http
+      path: /actuator/prometheus
+      interval: 30s
+      scrapeTimeout: 10s
+---
+# --- Keycloak ServiceMonitor ---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: keycloak
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+    app: shopnow
+spec:
+  selector:
+    matchLabels:
+      app: keycloak
+  namespaceSelector:
+    matchNames:
+      - shopnow
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 60s
+      scrapeTimeout: 15s
+---
+# --- PostgreSQL ServiceMonitor (dùng exporter nếu có) ---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: postgres
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+    app: shopnow
+spec:
+  selector:
+    matchLabels:
+      app: postgres
+  namespaceSelector:
+    matchNames:
+      - shopnow
+  endpoints:
+    - port: postgres
+      interval: 60s
+      scrapeTimeout: 10s

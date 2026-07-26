@@ -1,0 +1,47 @@
+# =============================================================================
+# shopnow-gitops — Production Overlay
+# =============================================================================
+# Override image tags cho production environment.
+# CI/CD pipeline (từ shopnow-app) sẽ tự động cập nhật newTag ở đây.
+# ArgoCD watch repo này → auto deploy mỗi khi có commit mới.
+# =============================================================================
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Reference đến base
+resources:
+  - ../../base
+
+# Đừng override namespace của base
+# namespace: shopnow
+
+# --- Image Tags (CI sẽ tự động cập nhật dòng này) ---
+images:
+  - name: techcareer/discovery-server
+    newTag: latest
+  - name: techcareer/config-server
+    newTag: latest
+  - name: techcareer/api-gateway
+    newTag: latest
+  - name: techcareer/product-service
+    newTag: latest
+  - name: techcareer/shopping-cart-service
+    newTag: latest
+  - name: techcareer/user-service
+    newTag: latest
+  - name: techcareer/shopnow-frontend
+    newTag: latest
+
+# --- Patches (nếu cần khác biệt giữa env) ---
+# patches:
+#   - patch: |-
+#       apiVersion: apps/v1
+#       kind: Deployment
+#       metadata:
+#         name: product-service
+#       spec:
+#         replicas: 3
+#     target:
+#       kind: Deployment
+#       name: product-service

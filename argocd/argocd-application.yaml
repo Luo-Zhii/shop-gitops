@@ -1,0 +1,89 @@
+# =============================================================================
+# ArgoCD Application — ShopNow E-Commerce (GitOps)
+# =============================================================================
+# ArgoCD watch repo: shopnow-gitops
+# Khi CI/CD pipeline cập nhật image tag → commit → ArgoCD auto deploy.
+#
+# Cấu hình: Automated Sync + Prune + Self-Heal + Kustomize
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: shopnow
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  labels:
+    app: shopnow
+    environment: production
+spec:
+  project: default
+
+  # === Nguồn: repo shopnow-gitops (tách riêng khỏi source code) ===
+  source:
+    repoURL: http://gitlab.luo.io.vn/root/shopnow-gitops.git
+    targetRevision: main
+    path: overlays/production    # ← Dùng Kustomize overlay cho production
+
+  # === Đích: K8s cluster → namespace shopnow ===
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: shopnow
+
+  # === Sync Policy ===
+  syncPolicy:
+    automated:
+      prune: true        # Xóa resources không còn trong Git
+      selfHeal: true     # Tự sửa nếu ai đó chỉnh = tay trên K8s
+      allowEmpty: false
+
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+
+    retry:
+      limit: 5
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 3m
+
+  # === Ignore differences ===
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas
+
+---
+# =============================================================================
+# Application cho Monitoring (Prometheus + Grafana)
+# =============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: shopnow-monitoring
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  labels:
+    app: shopnow
+    component: monitoring
+spec:
+  project: default
+
+  source:
+    repoURL: http://gitlab.luo.io.vn/root/shopnow-gitops.git
+    targetRevision: main
+    path: monitoring
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

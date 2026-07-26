@@ -1,0 +1,31 @@
+# =============================================================================
+# shopnow-gitops — Kustomize Base
+# =============================================================================
+# Base chứa tất cả Kubernetes resources chung cho mọi environment.
+# Overlays (staging/production) sẽ override image tag, replica count, v.v.
+# =============================================================================
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Namespace: shopnow
+namespace: shopnow
+
+# Tất cả resources được apply theo thứ tự (Kustomize tự sort)
+resources:
+  - 01-namespace.yaml
+  - 02-secrets.yaml
+  - 03-configmaps.yaml
+  - 04-glusterfs-storage.yaml
+  - 05-postgres.yaml
+  - 06-mysql.yaml
+  - 07-keycloak.yaml
+  - 08-discovery-server.yaml
+  - 09-config-server.yaml
+  - 10-api-gateway.yaml
+  - 11-product-service.yaml
+  - 12-shopping-cart-service.yaml
+  - 13-user-service.yaml
+  - 14-frontend.yaml
+  - 15-ingress-nginx.yaml
+  - 16-ingress-routes.yaml
