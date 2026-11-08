@@ -22,7 +22,7 @@ ingress:
 pdb: {maxUnavailable: 1}
 dataServices:
   # RDS/ElastiCache nằm trong subnet DB của VPC 10.20.0.0/16 → NetworkPolicy dùng ipBlock
-  postgres: {host: shopnow-prod.cluster-REPLACE.ap-southeast-1.rds.amazonaws.com, port: 5432, sslmode: require, cidrs: [10.20.64.0/20]}
+  postgres: {host: shopnow-prod-aws-pg.REPLACE.ap-southeast-1.rds.amazonaws.com, port: 5432, sslmode: require, cidrs: [10.20.64.0/20]}  # = output rds_endpoint của DevOps_Scripts/terraform/envs/aws-prod
   redis: {host: master.shopnow-prod.REPLACE.apse1.cache.amazonaws.com, port: 6379, tls: true, cidrs: [10.20.64.0/20]}
   kafka: {bootstrap: "shopnow-kafka-kafka-bootstrap.kafka.svc:9092", port: 9092, namespace: kafka}
   mongo: {host: shopnow-mongo-svc.shopnow-data.svc, port: 27017, options: "replicaSet=shopnow-mongo&authSource=admin", namespace: shopnow-data}
