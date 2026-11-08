@@ -1,0 +1,10 @@
+apiVersion: v2
+name: shopnow-service
+description: Helm chart dùng chung cho mọi service ShopNow v2 (Deployment hoặc Argo Rollout, autoscaling, NetworkPolicy, quan sát, ExternalSecret)
+type: application
+version: 2.0.0
+appVersion: "2.0.0"
+kubeVersion: ">=1.30.0-0"
+keywords: [shopnow, microservice, gitops]
+maintainers:
+  - name: Luo-Zhii

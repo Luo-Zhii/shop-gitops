@@ -1,0 +1,19 @@
+# helm lint / ct: Rollout canary + nginx + KEDA (Prometheus + Kafka lag)
+name: demo
+port: 8080
+global: {env: ci, provider: onprem, domain: ci.luo.io.vn}
+image: {tag: "1.2.3", digest: "sha256:0000000000000000000000000000000000000000000000000000000000000000"}
+ingress: {enabled: true, hostPrefix: api}
+rollout: {enabled: true, trafficRouting: nginx}
+autoscaling:
+  enabled: true
+  type: keda
+  keda:
+    rpsPerPod: 50
+    kafkaLag: [{topic: order.v1, consumerGroup: demo, lagThreshold: 100}]
+uses:
+  redis: {enabled: true}
+  kafka: {enabled: true}
+dataServices:
+  redis: {host: redis.example.svc, namespace: shopnow-data}
+  kafka: {bootstrap: kafka:9092, namespace: kafka}

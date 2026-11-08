@@ -1,0 +1,66 @@
+name: validate
+
+on:
+  pull_request:
+  push:
+    branches: [main, dev/problem]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  HELM_VERSION: v3.22.1
+  KUBECONFORM_VERSION: v0.8.0
+  KYVERNO_VERSION: v1.19.2
+  K8S_VERSION: 1.33.0
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cài công cụ (pin version)
+        run: |
+          set -euo pipefail
+          mkdir -p "$HOME/bin"; echo "$HOME/bin" >> "$GITHUB_PATH"
+          curl -sSL "https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz" | tar xz -C /tmp
+          mv /tmp/linux-amd64/helm "$HOME/bin/"
+          curl -sSL "https://github.com/yannh/kubeconform/releases/download/${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz" | tar xz -C "$HOME/bin" kubeconform
+          curl -sSL "https://github.com/kyverno/kyverno/releases/download/${KYVERNO_VERSION}/kyverno-cli_${KYVERNO_VERSION}_linux_x86_64.tar.gz" | tar xz -C "$HOME/bin" kyverno
+          pipx install yamllint==1.38.0
+          kubectl version --client
+
+      - name: yamllint
+        run: make yamllint
+
+      - name: JSON dashboard
+        run: make json
+
+      - name: helm lint (chart + mọi env × service)
+        run: make helm-lint
+
+      - name: helm template (mọi env × service)
+        run: make template
+
+      - name: kustomize build (platform theo env)
+        run: make kustomize
+
+      - name: kubeconform (-strict, schema CRD từ datreeio/CRDs-catalog)
+        run: make kubeconform K8S_VERSION=${K8S_VERSION}
+
+      - name: kyverno test
+        run: make kyverno-test
+
+      - name: Lưu manifest đã render
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rendered-manifests
+          path: .out/
+          retention-days: 7

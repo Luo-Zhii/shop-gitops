@@ -1,0 +1,10 @@
+clusterName: shopnow-prod-aws
+region: ap-southeast-1
+vpcId: vpc-REPLACE-ME
+replicaCount: 2
+serviceAccount:
+  name: aws-load-balancer-controller
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::111122223333:role/shopnow-prod-aws-lbc
+enableServiceMutatorWebhook: false
+serviceMonitor: {enabled: true, additionalLabels: {release: kube-prometheus-stack}}

@@ -1,0 +1,53 @@
+{{- if and .Values.autoscaling.enabled (eq .Values.autoscaling.type "keda") -}}
+{{- $as := .Values.autoscaling -}}
+{{- if and (eq (int $as.keda.rpsPerPod) 0) (empty $as.keda.kafkaLag) }}
+{{- fail "autoscaling.type=keda cần keda.rpsPerPod > 0 hoặc keda.kafkaLag" }}
+{{- end }}
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: {{ include "svc.name" . }}
+  labels:
+    {{- include "svc.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: {{ include "svc.workloadApiVersion" . }}
+    kind: {{ include "svc.workloadKind" . }}
+    name: {{ include "svc.name" . }}
+  minReplicaCount: {{ $as.minReplicas }}
+  maxReplicaCount: {{ $as.maxReplicas }}
+  pollingInterval: {{ $as.keda.pollingInterval }}
+  cooldownPeriod: {{ $as.keda.cooldownPeriod }}
+  advanced:
+    horizontalPodAutoscalerConfig:
+      behavior:
+        scaleDown:
+          stabilizationWindowSeconds: 300
+          policies: [{type: Percent, value: 50, periodSeconds: 60}]
+  triggers:
+    - type: cpu
+      metricType: Utilization
+      metadata:
+        value: {{ $as.targetCPUUtilizationPercentage | quote }}
+    {{- if gt (int $as.keda.rpsPerPod) 0 }}
+    - type: prometheus
+      name: rps
+      metadata:
+        serverAddress: {{ $as.keda.prometheusAddress }}
+        query: sum(rate(http_server_requests_seconds_count{service="{{ include "svc.name" . }}"}[1m]))
+        threshold: {{ $as.keda.rpsPerPod | quote }}
+        ignoreNullValues: "true"
+    {{- end }}
+    {{- range $as.keda.kafkaLag }}
+    - type: kafka
+      name: {{ printf "lag-%s" (.topic | replace "." "-") }}
+      metadata:
+        bootstrapServers: {{ required "dataServices.kafka.bootstrap" $.Values.dataServices.kafka.bootstrap }}
+        consumerGroup: {{ .consumerGroup }}
+        topic: {{ .topic }}
+        lagThreshold: {{ .lagThreshold | default 50 | quote }}
+        offsetResetPolicy: latest
+        # Không scale vượt số partition (consumer thừa sẽ rảnh)
+        allowIdleConsumers: "false"
+    {{- end }}
+{{- end }}

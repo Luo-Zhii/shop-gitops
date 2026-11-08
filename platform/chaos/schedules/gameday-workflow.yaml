@@ -1,0 +1,62 @@
+# Game-day: chuỗi lỗi tuần tự có khoảng nghỉ để AIOps tách từng incident; mỗi bước giữ expected-root-cause
+apiVersion: chaos-mesh.org/v1alpha1
+kind: Schedule
+metadata:
+  name: gameday-weekly
+  namespace: shopnow
+  labels:
+    aiops.shopnow.io/experiment: gameday
+  annotations:
+    aiops.shopnow.io/expected-root-cause: "payment,catalog,inventory"
+spec:
+  schedule: "0 14 * * 4"          # 14:00 thứ Năm
+  historyLimit: 3
+  concurrencyPolicy: Forbid
+  type: Workflow
+  workflow:
+    entry: gameday
+    templates:
+      - name: gameday
+        templateType: Serial
+        deadline: 60m
+        children: [delay-payment, rest-1, abort-catalog, rest-2, stress-inventory]
+      - name: delay-payment
+        templateType: NetworkChaos
+        deadline: 8m
+        networkChaos:
+          action: delay
+          mode: all
+          selector:
+            namespaces: [shopnow]
+            labelSelectors: {app.kubernetes.io/name: payment}
+          delay: {latency: 800ms, jitter: 100ms}
+          direction: to
+      - name: rest-1
+        templateType: Suspend
+        deadline: 10m
+      - name: abort-catalog
+        templateType: HTTPChaos
+        deadline: 8m
+        httpChaos:
+          mode: fixed-percent
+          value: "50"
+          selector:
+            namespaces: [shopnow]
+            labelSelectors: {app.kubernetes.io/name: catalog}
+          target: Request
+          port: 8104
+          path: "*"
+          abort: true
+      - name: rest-2
+        templateType: Suspend
+        deadline: 10m
+      - name: stress-inventory
+        templateType: StressChaos
+        deadline: 8m
+        stressChaos:
+          mode: all
+          selector:
+            namespaces: [shopnow]
+            labelSelectors: {app.kubernetes.io/name: inventory}
+          stressors:
+            cpu: {workers: 2, load: 90}

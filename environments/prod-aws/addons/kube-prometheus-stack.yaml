@@ -1,0 +1,9 @@
+# Ghi đè kube-prometheus-stack cho prod-aws
+prometheus:
+  prometheusSpec:
+    externalLabels: {cluster: shopnow-prod-aws, env: prod-aws}
+grafana:
+  ingress:
+    enabled: true
+    ingressClassName: alb
+    hosts: [grafana.aws.luo.io.vn]

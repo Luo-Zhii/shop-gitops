@@ -1,0 +1,5 @@
+community-operator-crds: {enabled: true}
+operator:
+  watchNamespace: shopnow-data
+database:
+  namespace: shopnow-data

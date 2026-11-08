@@ -1,0 +1,6 @@
+rollout:
+  trafficRouting: alb
+networkPolicy:
+  ingress:
+    fromIngressController: false
+    fromCIDRs: [10.20.0.0/16]          # ALB target-type ip (subnet public của VPC)

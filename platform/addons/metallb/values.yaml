@@ -1,0 +1,7 @@
+# IPAddressPool / L2Advertisement: platform/network/metallb
+speaker:
+  frr: {enabled: false}
+prometheus:
+  namespace: monitoring
+  serviceAccount: kube-prometheus-stack-prometheus
+  serviceMonitor: {enabled: true, additionalLabels: {release: kube-prometheus-stack}}

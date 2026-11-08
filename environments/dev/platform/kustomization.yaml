@@ -1,0 +1,58 @@
+# Platform config của cụm dev (on-prem, 1 node-pool nhỏ): mọi thứ 1 bản sao
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../../platform/namespaces
+  - ../../../platform/network/metallb
+  - ../../../platform/network/cert-manager
+  - ../../../platform/secrets/vault
+  - ../../../platform/kyverno/policies
+  - ../../../platform/kafka
+  - ../../../platform/postgres
+  - ../../../platform/data/redis
+  - ../../../platform/data/mongodb
+  - ../../../platform/data/onprem-objectstore
+  - ../../../platform/observability
+  - ../../../platform/slo
+configMapGenerator:
+  - name: cluster-info
+    namespace: observability
+    literals: [name=shopnow-dev, env=dev, provider=onprem]
+generatorOptions: {disableNameSuffixHash: true}
+patches:
+  - target: {kind: ClusterSecretStore, name: vault}
+    patch: |-
+      - {op: replace, path: /spec/provider/vault/path, value: kv-dev}
+  - target: {kind: Namespace}
+    patch: |-
+      - {op: add, path: /metadata/annotations/chaos-mesh.org~1inject, value: enabled}
+  - target: {kind: KafkaNodePool}
+    patch: |-
+      - {op: replace, path: /spec/replicas, value: 1}
+      - {op: replace, path: /spec/storage/volumes/0/size, value: 10Gi}
+  - target: {kind: Kafka}
+    patch: |-
+      - {op: replace, path: /spec/kafka/config/default.replication.factor, value: 1}
+      - {op: replace, path: /spec/kafka/config/min.insync.replicas, value: 1}
+      - {op: replace, path: /spec/kafka/config/offsets.topic.replication.factor, value: 1}
+      - {op: replace, path: /spec/kafka/config/transaction.state.log.replication.factor, value: 1}
+      - {op: replace, path: /spec/kafka/config/transaction.state.log.min.isr, value: 1}
+      - {op: remove, path: /spec/cruiseControl}
+  - target: {kind: KafkaTopic}
+    patch: |-
+      - {op: replace, path: /spec/replicas, value: 1}
+      - {op: replace, path: /spec/config/min.insync.replicas, value: "1"}
+  - target: {kind: Cluster, group: postgresql.cnpg.io}
+    patch: |-
+      - {op: replace, path: /spec/instances, value: 1}
+      - {op: replace, path: /spec/storage/size, value: 10Gi}
+  - target: {kind: RedisReplication}
+    patch: |-
+      - {op: replace, path: /spec/clusterSize, value: 1}
+  - target: {kind: RedisSentinel}
+    patch: |-
+      - {op: replace, path: /spec/clusterSize, value: 1}
+      - {op: replace, path: /spec/redisSentinelConfig/quorum, value: "1"}
+  - target: {kind: MongoDBCommunity}
+    patch: |-
+      - {op: replace, path: /spec/members, value: 1}

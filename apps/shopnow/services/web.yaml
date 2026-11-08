@@ -1,0 +1,27 @@
+# Next.js 15 (SSR) — vào thẳng từ ingress
+name: web
+component: frontend
+port: 3000
+ingress:
+  enabled: true
+  hostPrefix: shop
+externalSecret:
+  enabled: false
+env:
+  NEXT_PUBLIC_API_URL: "https://api.{{ .Values.global.domain }}"
+  API_INTERNAL_URL: http://api-gateway
+  NEXT_TELEMETRY_DISABLED: "1"
+  HOSTNAME: 0.0.0.0
+extraWritableDirs:
+  - {name: next-cache, mountPath: /app/.next/cache, sizeLimit: 512Mi}
+autoscaling:
+  type: keda
+  keda:
+    rpsPerPod: 80
+networkPolicy:
+  ingress:
+    fromGateway: false
+    fromIngressController: true
+resources:
+  requests: {cpu: 100m, memory: 256Mi}
+  limits: {cpu: "1", memory: 768Mi}

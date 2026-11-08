@@ -1,0 +1,6 @@
+# Controller đọc PrometheusServiceLevel (platform/slo) → sinh PrometheusRule (recording + multi-window multi-burn-rate alert)
+labels: {release: kube-prometheus-stack}
+commonPlugins: {enabled: true}
+metrics:
+  enabled: true
+  prometheusLabels: {release: kube-prometheus-stack}

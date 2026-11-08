@@ -1,0 +1,9 @@
+name: promotion
+port: 8108
+uses:
+  postgres: {enabled: true, database: promotion}
+  redis: {enabled: true, db: 3}       # flash sale Lua
+  kafka: {enabled: true}              # consumer order.v1 (nhả voucher khi huỷ)
+networkPolicy:
+  ingress:
+    fromServices: [order, cart]       # POST /quote

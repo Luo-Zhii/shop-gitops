@@ -1,0 +1,29 @@
+# Cụm EKS: không dùng token tĩnh. argocd-application-controller/server trên hub (on-prem) lấy credential AWS
+# qua IAM Roles Anywhere (chứng chỉ X.509 của DC) rồi assume role bên dưới; role được map vào EKS bằng
+# Access Entry (policy AmazonEKSClusterAdminPolicy hoặc policy hẹp hơn). API EKS: endpoint private qua
+# Site-to-Site VPN/Direct Connect, hoặc public endpoint giới hạn CIDR egress của DC.
+# Secret không chứa bí mật (ARN + CA công khai) nên để thẳng trong git.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: cluster-shopnow-prod-aws
+  namespace: argocd
+  labels:
+    argocd.argoproj.io/secret-type: cluster
+    shopnow.io/env: prod-aws
+    shopnow.io/provider: aws
+type: Opaque
+stringData:
+  name: shopnow-prod-aws
+  server: https://REPLACE-ME.gr7.ap-southeast-1.eks.amazonaws.com
+  config: |
+    {
+      "awsAuthConfig": {
+        "clusterName": "shopnow-prod-aws",
+        "roleARN": "arn:aws:iam::111122223333:role/argocd-hub-deployer"
+      },
+      "tlsClientConfig": {
+        "insecure": false,
+        "caData": "REPLACE-WITH-BASE64-CLUSTER-CA"
+      }
+    }

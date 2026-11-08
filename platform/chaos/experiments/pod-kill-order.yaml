@@ -1,0 +1,19 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: PodChaos
+metadata:
+  name: pod-kill-order
+  namespace: shopnow
+  labels:
+    aiops.shopnow.io/experiment: pod-kill-order
+    aiops.shopnow.io/fault-type: pod-kill
+  annotations:
+    aiops.shopnow.io/expected-root-cause: order
+    aiops.shopnow.io/expected-signals: "ShopNowPodRestarting, order 5xx/timeout ở api-gateway, outbox_pending tăng"
+spec:
+  action: pod-kill
+  mode: fixed-percent
+  value: "50"
+  selector:
+    namespaces: [shopnow]
+    labelSelectors: {app.kubernetes.io/name: order}
+  gracePeriod: 0

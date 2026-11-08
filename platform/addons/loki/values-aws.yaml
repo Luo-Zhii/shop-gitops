@@ -1,0 +1,8 @@
+loki:
+  storage:
+    s3: {region: ap-southeast-1}
+serviceAccount:
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::111122223333:role/shopnow-prod-loki-s3
+singleBinary:
+  persistence: {storageClass: gp3}

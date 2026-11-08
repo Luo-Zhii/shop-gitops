@@ -1,0 +1,12 @@
+# KHÔNG được Argo CD sync tự động (tạo CR = chạy lỗi ngay). Chạy tay hoặc từ aiops/eval:
+#   kubectl apply -f platform/chaos/experiments/network-delay-payment.yaml
+#   kubectl kustomize platform/chaos/experiments | kubectl apply -f -   # (cả bộ — không nên trên prod)
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - pod-kill-order.yaml
+  - network-delay-payment.yaml
+  - http-abort-catalog.yaml
+  - cpu-stress-inventory.yaml
+  - kafka-network-partition.yaml
+  - postgres-latency.yaml

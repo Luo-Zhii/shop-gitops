@@ -1,0 +1,45 @@
+{{- $ds := .Values.dataServices -}}
+{{- $u := .Values.uses -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "svc.name" . }}-env
+  labels:
+    {{- include "svc.labels" . | nindent 4 }}
+data:
+  PORT: {{ .Values.port | quote }}
+  SERVICE_NAME: {{ include "svc.name" . | quote }}
+  DEPLOY_ENV: {{ .Values.global.env | quote }}
+  CLOUD_PROVIDER: {{ .Values.global.provider | quote }}
+  APP_VERSION: {{ include "svc.imageTag" . | quote }}
+  LOG_LEVEL: {{ .Values.logLevel | quote }}
+  {{- if .Values.otel.enabled }}
+  OTEL_SERVICE_NAME: {{ include "svc.name" . | quote }}
+  OTEL_EXPORTER_OTLP_ENDPOINT: {{ .Values.otel.endpoint | quote }}
+  OTEL_EXPORTER_OTLP_PROTOCOL: "http/protobuf"
+  OTEL_TRACES_SAMPLER: "parentbased_traceidratio"
+  OTEL_TRACES_SAMPLER_ARG: {{ .Values.otel.samplerRatio | quote }}
+  OTEL_RESOURCE_ATTRIBUTES: {{ printf "deployment.environment.name=%s,cloud.provider=%s,service.namespace=%s,service.version=%s" .Values.global.env .Values.global.provider .Values.global.partOf (include "svc.imageTag" .) | quote }}
+  {{- else }}
+  OTEL_SDK_DISABLED: "true"
+  {{- end }}
+  {{- if $u.kafka.enabled }}
+  KAFKA_BROKERS: {{ required "dataServices.kafka.bootstrap" $ds.kafka.bootstrap | quote }}
+  {{- end }}
+  {{- if $u.opensearch.enabled }}
+  OPENSEARCH_URL: {{ required "dataServices.opensearch.url" $ds.opensearch.url | quote }}
+  {{- end }}
+  {{- if $u.s3.enabled }}
+  S3_ENDPOINT: {{ $ds.s3.endpoint | quote }}
+  S3_REGION: {{ $ds.s3.region | quote }}
+  S3_BUCKET: {{ required "dataServices.s3.bucket" $ds.s3.bucket | quote }}
+  S3_FORCE_PATH_STYLE: {{ $ds.s3.forcePathStyle | quote }}
+  MEDIA_PUBLIC_URL: {{ $ds.s3.publicUrl | quote }}
+  {{- end }}
+  {{- if $u.smtp.enabled }}
+  SMTP_HOST: {{ required "dataServices.smtp.host" $ds.smtp.host | quote }}
+  SMTP_PORT: {{ $ds.smtp.port | quote }}
+  {{- end }}
+  {{- range $k, $v := .Values.env }}
+  {{ $k }}: {{ tpl (toString $v) $ | quote }}
+  {{- end }}

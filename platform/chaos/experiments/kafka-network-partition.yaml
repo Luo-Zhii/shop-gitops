@@ -1,0 +1,25 @@
+# Cắt mạng giữa broker Kafka và service order → outbox_pending tăng, consumer lag, saga treo
+apiVersion: chaos-mesh.org/v1alpha1
+kind: NetworkChaos
+metadata:
+  name: kafka-network-partition
+  namespace: shopnow
+  labels:
+    aiops.shopnow.io/experiment: kafka-network-partition
+    aiops.shopnow.io/fault-type: network-partition
+  annotations:
+    aiops.shopnow.io/expected-root-cause: kafka
+    aiops.shopnow.io/expected-signals: "outbox_pending order tăng, kafka_messages_produced_total order giảm về 0, lag tăng"
+spec:
+  action: partition
+  mode: all
+  selector:
+    namespaces: [kafka]
+    labelSelectors: {strimzi.io/cluster: shopnow-kafka, strimzi.io/broker-role: "true"}
+  direction: both
+  target:
+    mode: all
+    selector:
+      namespaces: [shopnow]
+      labelSelectors: {app.kubernetes.io/name: order}
+  duration: 5m

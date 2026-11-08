@@ -1,0 +1,23 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: NetworkChaos
+metadata:
+  name: network-delay-payment
+  namespace: shopnow
+  labels:
+    aiops.shopnow.io/experiment: network-delay-payment
+    aiops.shopnow.io/fault-type: network-delay
+  annotations:
+    aiops.shopnow.io/expected-root-cause: payment
+    aiops.shopnow.io/expected-signals: "p95 payment tăng ~800ms, checkout_saga_duration tăng, lag payment.command.v1"
+spec:
+  action: delay
+  mode: all
+  selector:
+    namespaces: [shopnow]
+    labelSelectors: {app.kubernetes.io/name: payment}
+  delay:
+    latency: 800ms
+    jitter: 100ms
+    correlation: "50"
+  direction: to
+  duration: 10m

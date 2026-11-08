@@ -1,0 +1,22 @@
+# Lặp lại hằng tuần trên staging để đo MTTD/MTTR của AIOps theo thời gian
+apiVersion: chaos-mesh.org/v1alpha1
+kind: Schedule
+metadata:
+  name: weekly-pod-kill-order
+  namespace: shopnow
+  labels:
+    aiops.shopnow.io/experiment: pod-kill-order
+  annotations:
+    aiops.shopnow.io/expected-root-cause: order
+spec:
+  schedule: "0 10 * * 2"          # 10:00 thứ Ba
+  historyLimit: 5
+  concurrencyPolicy: Forbid
+  type: PodChaos
+  podChaos:
+    action: pod-kill
+    mode: fixed-percent
+    value: "50"
+    selector:
+      namespaces: [shopnow]
+      labelSelectors: {app.kubernetes.io/name: order}

@@ -1,0 +1,9 @@
+# Ghi đè kube-prometheus-stack cho prod-onprem
+prometheus:
+  prometheusSpec:
+    externalLabels: {cluster: shopnow-prod-onprem, env: prod-onprem}
+grafana:
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    hosts: [grafana.onprem.luo.io.vn]

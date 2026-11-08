@@ -1,0 +1,12 @@
+# helm lint / ct: cấu hình tối thiểu (Deployment + HPA)
+name: demo
+port: 8101
+global: {env: ci, provider: onprem, domain: ci.luo.io.vn}
+image: {tag: "sha-0000000"}
+autoscaling: {enabled: true, type: hpa}
+uses:
+  postgres: {enabled: true, database: demo}
+  kafka: {enabled: true}
+dataServices:
+  postgres: {host: pg.example.svc, namespace: shopnow-data}
+  kafka: {bootstrap: kafka:9092, namespace: kafka}

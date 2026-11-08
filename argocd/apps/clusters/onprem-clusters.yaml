@@ -1,0 +1,71 @@
+# Đăng ký cụm on-prem vào Argo CD hub (hub-spoke). Token của ServiceAccount argocd-manager trên từng cụm
+# được cất ở Vault của hub (kv-hub/argocd/clusters/<name>: server, caData, bearerToken) → ExternalSecret sinh
+# Secret loại "cluster" kèm nhãn mà ApplicationSet dùng để chọn cụm. Không có token nào trong git.
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: cluster-shopnow-dev
+  namespace: argocd
+spec:
+  refreshInterval: 1h
+  secretStoreRef: {kind: ClusterSecretStore, name: vault-hub}
+  target:
+    name: cluster-shopnow-dev
+    template:
+      metadata:
+        labels:
+          argocd.argoproj.io/secret-type: cluster
+          shopnow.io/env: dev
+          shopnow.io/provider: onprem
+      data:
+        name: shopnow-dev
+        server: "{{ .server }}"
+        config: '{"bearerToken":"{{ .bearerToken }}","tlsClientConfig":{"insecure":false,"caData":"{{ .caData }}"}}'
+  dataFrom:
+    - extract: {key: argocd/clusters/shopnow-dev}
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: cluster-shopnow-staging
+  namespace: argocd
+spec:
+  refreshInterval: 1h
+  secretStoreRef: {kind: ClusterSecretStore, name: vault-hub}
+  target:
+    name: cluster-shopnow-staging
+    template:
+      metadata:
+        labels:
+          argocd.argoproj.io/secret-type: cluster
+          shopnow.io/env: staging
+          shopnow.io/provider: onprem
+      data:
+        name: shopnow-staging
+        server: "{{ .server }}"
+        config: '{"bearerToken":"{{ .bearerToken }}","tlsClientConfig":{"insecure":false,"caData":"{{ .caData }}"}}'
+  dataFrom:
+    - extract: {key: argocd/clusters/shopnow-staging}
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: cluster-shopnow-prod-onprem
+  namespace: argocd
+spec:
+  refreshInterval: 1h
+  secretStoreRef: {kind: ClusterSecretStore, name: vault-hub}
+  target:
+    name: cluster-shopnow-prod-onprem
+    template:
+      metadata:
+        labels:
+          argocd.argoproj.io/secret-type: cluster
+          shopnow.io/env: prod-onprem
+          shopnow.io/provider: onprem
+      data:
+        name: shopnow-prod-onprem
+        server: "{{ .server }}"
+        config: '{"bearerToken":"{{ .bearerToken }}","tlsClientConfig":{"insecure":false,"caData":"{{ .caData }}"}}'
+  dataFrom:
+    - extract: {key: argocd/clusters/shopnow-prod-onprem}

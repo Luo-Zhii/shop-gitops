@@ -1,0 +1,41 @@
+# Giá trị chung cho mọi service ShopNow (mọi môi trường). Hợp đồng: shop-microservice/docs/architecture.md
+global:
+  partOf: shopnow
+
+externalSecret:
+  enabled: true
+  keyPrefix: shopnow/
+  sharedKeys: [INTERNAL_TOKEN]
+
+env:
+  NODE_ENV: production
+  JWKS_URL: http://identity/.well-known/jwks.json
+  JWT_ISSUER: shopnow-identity
+  JWT_AUDIENCE: shopnow
+  CORS_ORIGINS: "https://shop.{{ .Values.global.domain }}"
+  KAFKAJS_NO_PARTITIONER_WARNING: "1"
+  # URL nội bộ (Service ClusterIP cổng 80 trong namespace shopnow)
+  IDENTITY_URL: http://identity
+  USER_PROFILE_URL: http://user-profile
+  SELLER_URL: http://seller
+  CATALOG_URL: http://catalog
+  SEARCH_URL: http://search
+  INVENTORY_URL: http://inventory
+  CART_URL: http://cart
+  PROMOTION_URL: http://promotion
+  ORDER_URL: http://order
+  PAYMENT_URL: http://payment
+  SHIPPING_URL: http://shipping
+  REVIEW_URL: http://review
+  NOTIFICATION_URL: http://notification
+  AI_SERVICE_URL: http://ai-service
+
+autoscaling:
+  enabled: true
+  type: hpa
+  minReplicas: 2
+  maxReplicas: 6
+
+resources:
+  requests: {cpu: 100m, memory: 160Mi}
+  limits: {cpu: "1", memory: 384Mi}

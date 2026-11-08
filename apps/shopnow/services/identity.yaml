@@ -1,0 +1,14 @@
+name: identity
+port: 8101
+uses:
+  postgres: {enabled: true, database: identity}
+  kafka: {enabled: true}
+externalSecret:
+  keys: [JWT_PRIVATE_KEY, ADMIN_EMAIL, ADMIN_PASSWORD, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, TOTP_ENC_KEY]
+env:
+  ACCESS_TOKEN_TTL_SECONDS: "900"
+  DEV_EXPOSE_OTP: "false"
+networkPolicy:
+  ingress:
+    # JWKS được mọi service gọi để tự xác minh JWT (zero-trust)
+    fromSameNamespace: true

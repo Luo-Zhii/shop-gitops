@@ -1,0 +1,19 @@
+# Go — tiêu thụ inventory.command.v1 trong saga đặt hàng
+name: inventory
+port: 8106
+uses:
+  postgres: {enabled: true, database: inventory}
+  kafka: {enabled: true}
+autoscaling:
+  type: keda
+  minReplicas: 2
+  maxReplicas: 8
+  keda:
+    kafkaLag:
+      - {topic: inventory.command.v1, consumerGroup: inventory, lagThreshold: 50}
+networkPolicy:
+  ingress:
+    fromServices: [cart, order]       # GET /stock
+resources:
+  requests: {cpu: 50m, memory: 48Mi}
+  limits: {cpu: 500m, memory: 192Mi}

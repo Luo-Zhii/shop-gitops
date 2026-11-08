@@ -1,0 +1,101 @@
+# Một cụm PostgreSQL HA (1 primary + 2 replica) cho mọi service on-prem; prod-aws dùng RDS (không áp dụng file này).
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: shopnow-pg
+  namespace: shopnow-data
+  annotations:
+    argocd.argoproj.io/sync-wave: "4"
+spec:
+  instances: 3
+  # Bỏ trống imageName → image PostgreSQL mặc định của CNPG đã pin; cần pgvector thì dùng biến thể "standard"
+  primaryUpdateStrategy: unsupervised
+  enableSuperuserAccess: false
+  postgresql:
+    parameters:
+      max_connections: "400"
+      shared_buffers: 512MB
+      log_min_duration_statement: "500"
+      pg_stat_statements.track: all
+    shared_preload_libraries: [pg_stat_statements]
+  storage:
+    size: 50Gi
+    storageClass: longhorn
+  walStorage:
+    size: 10Gi
+    storageClass: longhorn
+  resources:
+    requests: {cpu: 500m, memory: 1Gi}
+    limits: {memory: 2Gi}
+  affinity:
+    enablePodAntiAffinity: true
+    topologyKey: kubernetes.io/hostname
+    podAntiAffinityType: preferred
+  # WAL + base backup qua plugin Barman Cloud (ObjectStore shopnow-pg-backup)
+  plugins:
+    - name: barman-cloud.cloudnative-pg.io
+      isWALArchiver: true
+      parameters:
+        barmanObjectName: shopnow-pg-backup
+  managed:
+    roles:
+      - name: identity
+        ensure: present
+        login: true
+        connectionLimit: 50
+        passwordSecret: {name: pg-identity}
+      - name: user_profile
+        ensure: present
+        login: true
+        connectionLimit: 50
+        passwordSecret: {name: pg-user-profile}
+      - name: seller
+        ensure: present
+        login: true
+        connectionLimit: 50
+        passwordSecret: {name: pg-seller}
+      - name: catalog
+        ensure: present
+        login: true
+        connectionLimit: 50
+        passwordSecret: {name: pg-catalog}
+      - name: search
+        ensure: present
+        login: true
+        connectionLimit: 50
+        passwordSecret: {name: pg-search}
+      - name: inventory
+        ensure: present
+        login: true
+        connectionLimit: 50
+        passwordSecret: {name: pg-inventory}
+      - name: promotion
+        ensure: present
+        login: true
+        connectionLimit: 50
+        passwordSecret: {name: pg-promotion}
+      - name: orders
+        ensure: present
+        login: true
+        connectionLimit: 50
+        passwordSecret: {name: pg-order}
+      - name: payment
+        ensure: present
+        login: true
+        connectionLimit: 50
+        passwordSecret: {name: pg-payment}
+      - name: shipping
+        ensure: present
+        login: true
+        connectionLimit: 50
+        passwordSecret: {name: pg-shipping}
+      - name: ai
+        ensure: present
+        login: true
+        connectionLimit: 50
+        passwordSecret: {name: pg-ai-service}
+      - name: aiops
+        ensure: present
+        login: true
+        connectionLimit: 50
+        passwordSecret: {name: pg-aiops}

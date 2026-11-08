@@ -1,0 +1,266 @@
+# Tài nguyên mẫu: good-* phải pass, bad-* phải fail đúng policy tương ứng
+apiVersion: v1
+kind: Pod
+metadata:
+  name: good-pod
+  namespace: shopnow
+  labels: {app.kubernetes.io/name: order}
+spec:
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 10001
+    seccompProfile: {type: RuntimeDefault}
+  containers:
+  - name: order
+    image: registry.luo.io.vn/shopnow/order:v2.0.0
+    resources:
+      requests: {cpu: 100m, memory: 128Mi}
+      limits: {cpu: '1', memory: 384Mi}
+    livenessProbe:
+      httpGet: {path: /healthz, port: 8109}
+      periodSeconds: 10
+    readinessProbe:
+      httpGet: {path: /readyz, port: 8109}
+      periodSeconds: 5
+    securityContext:
+      allowPrivilegeEscalation: false
+      privileged: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop: [ALL]
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: bad-latest
+  namespace: shopnow
+  labels: {app.kubernetes.io/name: order}
+spec:
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 10001
+    seccompProfile: {type: RuntimeDefault}
+  containers:
+  - name: order
+    image: registry.luo.io.vn/shopnow/order:latest
+    resources:
+      requests: {cpu: 100m, memory: 128Mi}
+      limits: {cpu: '1', memory: 384Mi}
+    livenessProbe:
+      httpGet: {path: /healthz, port: 8109}
+      periodSeconds: 10
+    readinessProbe:
+      httpGet: {path: /readyz, port: 8109}
+      periodSeconds: 5
+    securityContext:
+      allowPrivilegeEscalation: false
+      privileged: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop: [ALL]
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: bad-no-tag
+  namespace: shopnow
+  labels: {app.kubernetes.io/name: order}
+spec:
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 10001
+    seccompProfile: {type: RuntimeDefault}
+  containers:
+  - name: order
+    image: registry.luo.io.vn/shopnow/order
+    resources:
+      requests: {cpu: 100m, memory: 128Mi}
+      limits: {cpu: '1', memory: 384Mi}
+    livenessProbe:
+      httpGet: {path: /healthz, port: 8109}
+      periodSeconds: 10
+    readinessProbe:
+      httpGet: {path: /readyz, port: 8109}
+      periodSeconds: 5
+    securityContext:
+      allowPrivilegeEscalation: false
+      privileged: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop: [ALL]
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: bad-no-limits
+  namespace: shopnow
+  labels: {app.kubernetes.io/name: order}
+spec:
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 10001
+    seccompProfile: {type: RuntimeDefault}
+  containers:
+  - name: order
+    image: registry.luo.io.vn/shopnow/order:v2.0.0
+    livenessProbe:
+      httpGet: {path: /healthz, port: 8109}
+      periodSeconds: 10
+    readinessProbe:
+      httpGet: {path: /readyz, port: 8109}
+      periodSeconds: 5
+    securityContext:
+      allowPrivilegeEscalation: false
+      privileged: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop: [ALL]
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: bad-root
+  namespace: shopnow
+  labels: {app.kubernetes.io/name: order}
+spec:
+  securityContext:
+    runAsNonRoot: false
+    runAsUser: 0
+    seccompProfile: {type: RuntimeDefault}
+  containers:
+  - name: order
+    image: registry.luo.io.vn/shopnow/order:v2.0.0
+    resources:
+      requests: {cpu: 100m, memory: 128Mi}
+      limits: {cpu: '1', memory: 384Mi}
+    livenessProbe:
+      httpGet: {path: /healthz, port: 8109}
+      periodSeconds: 10
+    readinessProbe:
+      httpGet: {path: /readyz, port: 8109}
+      periodSeconds: 5
+    securityContext:
+      allowPrivilegeEscalation: false
+      privileged: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop: [ALL]
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: bad-no-probes
+  namespace: shopnow
+  labels: {app.kubernetes.io/name: order}
+spec:
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 10001
+    seccompProfile: {type: RuntimeDefault}
+  containers:
+  - name: order
+    image: registry.luo.io.vn/shopnow/order:v2.0.0
+    resources:
+      requests: {cpu: 100m, memory: 128Mi}
+      limits: {cpu: '1', memory: 384Mi}
+    securityContext:
+      allowPrivilegeEscalation: false
+      privileged: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop: [ALL]
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: bad-privileged
+  namespace: shopnow
+  labels: {app.kubernetes.io/name: order}
+spec:
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 10001
+    seccompProfile: {type: RuntimeDefault}
+  containers:
+  - name: order
+    image: registry.luo.io.vn/shopnow/order:v2.0.0
+    resources:
+      requests: {cpu: 100m, memory: 128Mi}
+      limits: {cpu: '1', memory: 384Mi}
+    livenessProbe:
+      httpGet: {path: /healthz, port: 8109}
+      periodSeconds: 10
+    readinessProbe:
+      httpGet: {path: /readyz, port: 8109}
+      periodSeconds: 5
+    securityContext:
+      allowPrivilegeEscalation: true
+      privileged: true
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop: [ALL]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: good-deployment, namespace: shopnow}
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app.kubernetes.io/name: order}
+  template:
+    metadata:
+      labels: {app.kubernetes.io/name: order}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+      - name: order
+        image: registry.luo.io.vn/shopnow/order:v2.0.0
+        resources:
+          requests: {cpu: 100m, memory: 128Mi}
+          limits: {cpu: '1', memory: 384Mi}
+        livenessProbe:
+          httpGet: {path: /healthz, port: 8109}
+          periodSeconds: 10
+        readinessProbe:
+          httpGet: {path: /readyz, port: 8109}
+          periodSeconds: 5
+        securityContext:
+          allowPrivilegeEscalation: false
+          privileged: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: [ALL]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: bad-deployment, namespace: shopnow}
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app.kubernetes.io/name: order}
+  template:
+    metadata:
+      labels: {app.kubernetes.io/name: order}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+      - name: order
+        image: registry.luo.io.vn/shopnow/order:latest
+        resources:
+          requests: {cpu: 100m, memory: 128Mi}
+          limits: {cpu: '1', memory: 384Mi}
+        readinessProbe:
+          httpGet: {path: /readyz, port: 8109}
+          periodSeconds: 5
+        securityContext:
+          allowPrivilegeEscalation: false
+          privileged: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: [ALL]

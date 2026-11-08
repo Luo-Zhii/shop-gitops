@@ -1,0 +1,10 @@
+name: shipping
+port: 8111
+uses:
+  postgres: {enabled: true, database: shipping}
+  kafka: {enabled: true}              # consumer order.confirmed
+env:
+  DEV_SIMULATOR: "false"
+networkPolicy:
+  ingress:
+    fromServices: [order]             # POST /quote

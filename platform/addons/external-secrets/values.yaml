@@ -1,0 +1,6 @@
+installCRDs: true
+replicaCount: 2
+podDisruptionBudget: {enabled: true}
+serviceMonitor: {enabled: true, additionalLabels: {release: kube-prometheus-stack}}
+webhook: {replicaCount: 2}
+certController: {replicaCount: 1}

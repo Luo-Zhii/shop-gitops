@@ -1,0 +1,38 @@
+{{- if and .Values.rollout.enabled .Values.rollout.analysis.enabled -}}
+{{- $a := .Values.rollout.analysis -}}
+{{- $sel := `service="{{args.service-name}}",rollouts_pod_template_hash="{{args.canary-hash}}"` -}}
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: {{ include "svc.name" . }}-canary-health
+  labels:
+    {{- include "svc.labels" . | nindent 4 }}
+spec:
+  args:
+    - name: service-name
+    - name: canary-hash
+  metrics:
+    # Tỉ lệ 5xx của riêng bản canary (nhãn rollouts_pod_template_hash do ServiceMonitor gắn từ pod)
+    - name: error-rate
+      interval: {{ $a.interval }}
+      failureLimit: {{ $a.failureLimit }}
+      successCondition: "len(result) == 0 || isNaN(result[0]) || result[0] <= {{ $a.maxErrorRate }}"
+      provider:
+        prometheus:
+          address: {{ $a.prometheusAddress }}
+          query: |
+            sum(rate(http_server_requests_seconds_count{ {{- $sel }},status=~"5.."}[2m]))
+            /
+            sum(rate(http_server_requests_seconds_count{ {{- $sel }}}[2m]))
+    # p95 latency của bản canary
+    - name: p95-latency
+      interval: {{ $a.interval }}
+      failureLimit: {{ $a.failureLimit }}
+      successCondition: "len(result) == 0 || isNaN(result[0]) || result[0] <= {{ $a.maxP95Seconds }}"
+      provider:
+        prometheus:
+          address: {{ $a.prometheusAddress }}
+          query: |
+            histogram_quantile(0.95,
+              sum by (le) (rate(http_server_requests_seconds_bucket{ {{- $sel }}}[2m])))
+{{- end }}

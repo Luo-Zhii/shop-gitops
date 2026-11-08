@@ -1,0 +1,26 @@
+# Python FastAPI — gợi ý, chatbot RAG, kiểm duyệt
+name: ai-service
+port: 8114
+uses:
+  postgres: {enabled: true, database: ai}   # pgvector
+  kafka: {enabled: true}              # consumer catalog.product.v1, order.v1
+externalSecret:
+  keys: [ANTHROPIC_API_KEY]
+env:
+  LLM_PROVIDER: ollama                # prod-aws ghi đè: bedrock
+  OLLAMA_URL: http://ollama.ai.svc:11434
+  UVICORN_WORKERS: "2"
+podSecurityContext:
+  runAsUser: 10001
+networkPolicy:
+  egress:
+    extra:
+      - to:
+          - namespaceSelector: {matchLabels: {kubernetes.io/metadata.name: ai}}
+        ports: [{port: 11434, protocol: TCP}]
+resources:
+  requests: {cpu: 250m, memory: 512Mi}
+  limits: {cpu: "2", memory: 1536Mi}
+probes:
+  startup:
+    failureThreshold: 60              # nạp model embedding

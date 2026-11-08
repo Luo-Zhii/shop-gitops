@@ -1,0 +1,21 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: StressChaos
+metadata:
+  name: cpu-stress-inventory
+  namespace: shopnow
+  labels:
+    aiops.shopnow.io/experiment: cpu-stress-inventory
+    aiops.shopnow.io/fault-type: cpu-stress
+  annotations:
+    aiops.shopnow.io/expected-root-cause: inventory
+    aiops.shopnow.io/expected-signals: "CPU throttling inventory, lag inventory.command.v1, saga chậm/huỷ do reservation hết hạn"
+spec:
+  mode: all
+  selector:
+    namespaces: [shopnow]
+    labelSelectors: {app.kubernetes.io/name: inventory}
+  stressors:
+    cpu:
+      workers: 2
+      load: 90
+  duration: 10m

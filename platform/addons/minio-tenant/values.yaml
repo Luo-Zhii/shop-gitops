@@ -1,0 +1,20 @@
+# MinIO on-prem (S3 tương thích): ảnh sản phẩm, backup Postgres, Loki chunks
+tenant:
+  name: shopnow-minio
+  configSecret:
+    name: minio-env                   # config.env (MINIO_ROOT_USER/PASSWORD) từ ExternalSecret
+    existingSecret: true
+  pools:
+    - name: pool-0
+      servers: 4
+      volumesPerServer: 2
+      size: 50Gi
+      storageClassName: longhorn
+      securityContext: {runAsUser: 1000, runAsGroup: 1000, fsGroup: 1000, runAsNonRoot: true}
+  certificate:
+    requestAutoCert: false
+  buckets:
+    - name: shopnow-media
+    - name: shopnow-pg-backups
+    - name: shopnow-loki
+  metrics: {enabled: true}

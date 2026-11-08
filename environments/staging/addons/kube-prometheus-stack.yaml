@@ -1,0 +1,9 @@
+# Ghi đè kube-prometheus-stack cho staging
+prometheus:
+  prometheusSpec:
+    externalLabels: {cluster: shopnow-staging, env: staging}
+grafana:
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    hosts: [grafana.staging.luo.io.vn]

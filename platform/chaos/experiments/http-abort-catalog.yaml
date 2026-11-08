@@ -1,0 +1,23 @@
+# HTTPChaos không có tham số xác suất → tiêm vào 50% pod catalog (mode fixed-percent) ≈ 50% request bị abort
+apiVersion: chaos-mesh.org/v1alpha1
+kind: HTTPChaos
+metadata:
+  name: http-abort-catalog
+  namespace: shopnow
+  labels:
+    aiops.shopnow.io/experiment: http-abort-catalog
+    aiops.shopnow.io/fault-type: http-abort
+  annotations:
+    aiops.shopnow.io/expected-root-cause: catalog
+    aiops.shopnow.io/expected-signals: "5xx catalog & BFF api-gateway, checkout lỗi bước /internal/skus"
+spec:
+  mode: fixed-percent
+  value: "50"
+  selector:
+    namespaces: [shopnow]
+    labelSelectors: {app.kubernetes.io/name: catalog}
+  target: Request
+  port: 8104
+  path: "*"
+  abort: true
+  duration: 10m

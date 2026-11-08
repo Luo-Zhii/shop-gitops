@@ -1,0 +1,42 @@
+# Cấu hình nền tảng theo môi trường (Kafka/topic, CNPG, Redis, Mongo, SecretStore, Kyverno, dashboard, SLO, chaos):
+# environments/<env>/platform (Kustomize). prune=false: không bao giờ tự xoá tài nguyên dữ liệu.
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: platform-config
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  syncPolicy:
+    preserveResourcesOnDeletion: true
+  generators:
+    - clusters:
+        selector:
+          matchExpressions:
+            - {key: shopnow.io/env, operator: In, values: [dev, staging, prod-onprem, prod-aws]}
+  template:
+    metadata:
+      name: '{{ index .metadata.labels "shopnow.io/env" }}-platform-config'
+      labels:
+        shopnow.io/env: '{{ index .metadata.labels "shopnow.io/env" }}'
+    spec:
+      project: platform
+      source:
+        repoURL: https://github.com/Luo-Zhii/shop-gitops.git
+        targetRevision: main
+        path: 'environments/{{ index .metadata.labels "shopnow.io/env" }}/platform'
+      destination:
+        name: '{{ .name }}'
+      syncPolicy:
+        automated:
+          prune: false
+          selfHeal: true
+        syncOptions:
+          - ServerSideApply=true
+          - SkipDryRunOnMissingResource=true     # CRD do addon cài, có thể chưa có ở lần sync đầu
+        retry:
+          limit: 20
+          backoff: {duration: 30s, factor: 2, maxDuration: 10m}

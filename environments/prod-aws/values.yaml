@@ -1,0 +1,32 @@
+# prod-aws — EKS ap-southeast-1 (gp3, ALB, Secrets Manager). Dữ liệu managed: RDS PostgreSQL, ElastiCache, S3.
+# Kafka (Strimzi), MongoDB, OpenSearch vẫn chạy trong cụm. Chỉ đổi endpoint/secret — image và chart giữ nguyên.
+global: {env: prod-aws, provider: aws, domain: luo.io.vn}
+image: {registry: 111122223333.dkr.ecr.ap-southeast-1.amazonaws.com}
+logLevel: info
+otel: {samplerRatio: "0.2"}
+autoscaling: {minReplicas: 3}
+priorityClassName: shopnow-critical
+externalSecret:
+  secretStoreRef: {kind: ClusterSecretStore, name: aws-secrets-manager}
+ingress:
+  className: alb
+  tls: {enabled: true, clusterIssuer: ""}      # chứng chỉ ACM gắn ở ALB
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/group.name: shopnow
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}]'
+    alb.ingress.kubernetes.io/ssl-redirect: "443"
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:ap-southeast-1:111122223333:certificate/REPLACE-ME
+    alb.ingress.kubernetes.io/healthcheck-path: /readyz
+pdb: {maxUnavailable: 1}
+dataServices:
+  # RDS/ElastiCache nằm trong subnet DB của VPC 10.20.0.0/16 → NetworkPolicy dùng ipBlock
+  postgres: {host: shopnow-prod.cluster-REPLACE.ap-southeast-1.rds.amazonaws.com, port: 5432, sslmode: require, cidrs: [10.20.64.0/20]}
+  redis: {host: master.shopnow-prod.REPLACE.apse1.cache.amazonaws.com, port: 6379, tls: true, cidrs: [10.20.64.0/20]}
+  kafka: {bootstrap: "shopnow-kafka-kafka-bootstrap.kafka.svc:9092", port: 9092, namespace: kafka}
+  mongo: {host: shopnow-mongo-svc.shopnow-data.svc, port: 27017, options: "replicaSet=shopnow-mongo&authSource=admin", namespace: shopnow-data}
+  opensearch: {url: "https://opensearch-cluster-master.shopnow-data.svc:9200", port: 9200, namespace: shopnow-data}
+  # S3 qua IRSA (không có access key); gateway endpoint S3 dùng IP công khai → mở 443
+  s3: {endpoint: "", region: ap-southeast-1, bucket: shopnow-prod-media, publicUrl: "https://media.luo.io.vn", forcePathStyle: false, staticCredentials: false, port: 443, cidrs: [0.0.0.0/0]}
+  smtp: {host: email-smtp.ap-southeast-1.amazonaws.com, port: 587, cidrs: [0.0.0.0/0]}

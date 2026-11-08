@@ -1,0 +1,113 @@
+# kyverno test platform/kyverno/tests — verify-image-signatures không test offline được (cần Rekor/registry);
+# kiểm bằng cosign verify trong CI của shop-microservice và audit report trên cụm.
+apiVersion: cli.kyverno.io/v1alpha1
+kind: Test
+metadata: {name: shopnow-pod-policies}
+policies:
+  - ../../policies/disallow-latest-tag.yaml
+  - ../../policies/require-requests-limits.yaml
+  - ../../policies/require-run-as-non-root.yaml
+  - ../../policies/require-probes.yaml
+  - ../../policies/disallow-privileged.yaml
+resources: [resources.yaml]
+results:
+- policy: disallow-latest-tag
+  rule: require-image-tag
+  kind: Pod
+  resources: [bad-no-tag]
+  result: fail
+- policy: disallow-latest-tag
+  rule: require-image-tag
+  kind: Pod
+  resources: [good-pod, bad-latest, bad-no-limits, bad-root, bad-no-probes, bad-privileged]
+  result: pass
+- policy: disallow-latest-tag
+  rule: autogen-require-image-tag
+  kind: Deployment
+  resources: [good-deployment]
+  result: pass
+- policy: disallow-latest-tag
+  rule: disallow-latest
+  kind: Pod
+  resources: [bad-latest]
+  result: fail
+- policy: disallow-latest-tag
+  rule: disallow-latest
+  kind: Pod
+  resources: [good-pod, bad-no-tag, bad-no-limits, bad-root, bad-no-probes, bad-privileged]
+  result: pass
+- policy: disallow-latest-tag
+  rule: autogen-disallow-latest
+  kind: Deployment
+  resources: [good-deployment]
+  result: pass
+- policy: require-requests-limits
+  rule: validate-resources
+  kind: Pod
+  resources: [bad-no-limits]
+  result: fail
+- policy: require-requests-limits
+  rule: validate-resources
+  kind: Pod
+  resources: [good-pod, bad-latest, bad-no-tag, bad-root, bad-no-probes, bad-privileged]
+  result: pass
+- policy: require-requests-limits
+  rule: autogen-validate-resources
+  kind: Deployment
+  resources: [good-deployment]
+  result: pass
+- policy: require-run-as-non-root
+  rule: run-as-non-root
+  kind: Pod
+  resources: [bad-root]
+  result: fail
+- policy: require-run-as-non-root
+  rule: run-as-non-root
+  kind: Pod
+  resources: [good-pod, bad-latest, bad-no-tag, bad-no-limits, bad-no-probes, bad-privileged]
+  result: pass
+- policy: require-run-as-non-root
+  rule: autogen-run-as-non-root
+  kind: Deployment
+  resources: [good-deployment]
+  result: pass
+- policy: require-probes
+  rule: validate-probes
+  kind: Pod
+  resources: [bad-no-probes]
+  result: fail
+- policy: require-probes
+  rule: validate-probes
+  kind: Pod
+  resources: [good-pod, bad-latest, bad-no-tag, bad-no-limits, bad-root, bad-privileged]
+  result: pass
+- policy: require-probes
+  rule: autogen-validate-probes
+  kind: Deployment
+  resources: [good-deployment]
+  result: pass
+- policy: disallow-privileged
+  rule: privileged-containers
+  kind: Pod
+  resources: [bad-privileged]
+  result: fail
+- policy: disallow-privileged
+  rule: privileged-containers
+  kind: Pod
+  resources: [good-pod, bad-latest, bad-no-tag, bad-no-limits, bad-root, bad-no-probes]
+  result: pass
+- policy: disallow-privileged
+  rule: autogen-privileged-containers
+  kind: Deployment
+  resources: [good-deployment]
+  result: pass
+- policy: disallow-latest-tag
+  rule: autogen-disallow-latest
+  kind: Deployment
+  resources: [bad-deployment]
+  result: fail
+- policy: require-probes
+  rule: autogen-validate-probes
+  kind: Deployment
+  resources: [bad-deployment]
+  result: fail

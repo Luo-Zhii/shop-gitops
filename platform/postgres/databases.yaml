@@ -1,0 +1,171 @@
+# Mỗi service một database + một role sở hữu (database-per-service).
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: shopnow-pg-identity
+  namespace: shopnow-data
+  annotations:
+    argocd.argoproj.io/sync-wave: "6"
+spec:
+  cluster: {name: shopnow-pg}
+  name: identity
+  owner: identity
+  ensure: present
+  databaseReclaimPolicy: retain
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: shopnow-pg-user-profile
+  namespace: shopnow-data
+  annotations:
+    argocd.argoproj.io/sync-wave: "6"
+spec:
+  cluster: {name: shopnow-pg}
+  name: user_profile
+  owner: user_profile
+  ensure: present
+  databaseReclaimPolicy: retain
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: shopnow-pg-seller
+  namespace: shopnow-data
+  annotations:
+    argocd.argoproj.io/sync-wave: "6"
+spec:
+  cluster: {name: shopnow-pg}
+  name: seller
+  owner: seller
+  ensure: present
+  databaseReclaimPolicy: retain
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: shopnow-pg-catalog
+  namespace: shopnow-data
+  annotations:
+    argocd.argoproj.io/sync-wave: "6"
+spec:
+  cluster: {name: shopnow-pg}
+  name: catalog
+  owner: catalog
+  ensure: present
+  databaseReclaimPolicy: retain
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: shopnow-pg-search
+  namespace: shopnow-data
+  annotations:
+    argocd.argoproj.io/sync-wave: "6"
+spec:
+  cluster: {name: shopnow-pg}
+  name: search
+  owner: search
+  ensure: present
+  databaseReclaimPolicy: retain
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: shopnow-pg-inventory
+  namespace: shopnow-data
+  annotations:
+    argocd.argoproj.io/sync-wave: "6"
+spec:
+  cluster: {name: shopnow-pg}
+  name: inventory
+  owner: inventory
+  ensure: present
+  databaseReclaimPolicy: retain
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: shopnow-pg-promotion
+  namespace: shopnow-data
+  annotations:
+    argocd.argoproj.io/sync-wave: "6"
+spec:
+  cluster: {name: shopnow-pg}
+  name: promotion
+  owner: promotion
+  ensure: present
+  databaseReclaimPolicy: retain
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: shopnow-pg-order
+  namespace: shopnow-data
+  annotations:
+    argocd.argoproj.io/sync-wave: "6"
+spec:
+  cluster: {name: shopnow-pg}
+  name: orders
+  owner: orders
+  ensure: present
+  databaseReclaimPolicy: retain
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: shopnow-pg-payment
+  namespace: shopnow-data
+  annotations:
+    argocd.argoproj.io/sync-wave: "6"
+spec:
+  cluster: {name: shopnow-pg}
+  name: payment
+  owner: payment
+  ensure: present
+  databaseReclaimPolicy: retain
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: shopnow-pg-shipping
+  namespace: shopnow-data
+  annotations:
+    argocd.argoproj.io/sync-wave: "6"
+spec:
+  cluster: {name: shopnow-pg}
+  name: shipping
+  owner: shipping
+  ensure: present
+  databaseReclaimPolicy: retain
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: shopnow-pg-ai-service
+  namespace: shopnow-data
+  annotations:
+    argocd.argoproj.io/sync-wave: "6"
+spec:
+  cluster: {name: shopnow-pg}
+  name: ai
+  owner: ai
+  ensure: present
+  databaseReclaimPolicy: retain
+  extensions:
+    - {name: vector, ensure: present}
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: shopnow-pg-aiops
+  namespace: shopnow-data
+  annotations:
+    argocd.argoproj.io/sync-wave: "6"
+spec:
+  cluster: {name: shopnow-pg}
+  name: aiops
+  owner: aiops
+  ensure: present
+  databaseReclaimPolicy: retain

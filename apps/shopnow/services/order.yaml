@@ -1,0 +1,28 @@
+# Nhạc trưởng saga đặt hàng
+name: order
+port: 8109
+uses:
+  postgres: {enabled: true, database: orders}
+  kafka: {enabled: true}
+env:
+  CHECKOUT_TIMEOUT_SECONDS: "900"
+  AUTO_COMPLETE_SECONDS: "604800"
+rollout:
+  enabled: true
+  analysis:
+    maxP95Seconds: 1.5                # khớp SLO checkout p95 < 1.5s
+autoscaling:
+  type: keda
+  minReplicas: 2
+  maxReplicas: 10
+  keda:
+    rpsPerPod: 60
+    kafkaLag:
+      - {topic: inventory.event.v1, consumerGroup: order, lagThreshold: 50}
+      - {topic: payment.event.v1, consumerGroup: order, lagThreshold: 50}
+resources:
+  requests: {cpu: 200m, memory: 192Mi}
+  limits: {cpu: "1", memory: 512Mi}
+metrics:
+  prometheusRule:
+    p95WarningSeconds: 1.5

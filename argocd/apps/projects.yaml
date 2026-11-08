@@ -1,0 +1,72 @@
+# AppProject: giới hạn repo nguồn, cụm & namespace đích, loại tài nguyên
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: shopnow
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-20"
+spec:
+  description: Ứng dụng ShopNow v2 (chỉ namespace shopnow)
+  sourceRepos:
+    - https://github.com/Luo-Zhii/shop-gitops.git
+  destinations:
+    - {name: shopnow-dev, namespace: shopnow}
+    - {name: shopnow-staging, namespace: shopnow}
+    - {name: shopnow-prod-onprem, namespace: shopnow}
+    - {name: shopnow-prod-aws, namespace: shopnow}
+  # Không cho app tạo tài nguyên cấp cụm
+  clusterResourceWhitelist: []
+  namespaceResourceBlacklist:
+    - {group: "", kind: ResourceQuota}
+    - {group: "", kind: LimitRange}
+    - {group: rbac.authorization.k8s.io, kind: RoleBinding}
+    - {group: rbac.authorization.k8s.io, kind: Role}
+  orphanedResources: {warn: true}
+  roles:
+    - name: ci
+      description: CI chỉ được xem trạng thái (deploy diễn ra bằng PR vào git)
+      policies:
+        - p, proj:shopnow:ci, applications, get, shopnow/*, allow
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: platform
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-20"
+spec:
+  description: Addon & cấu hình nền tảng (operator, quan sát, bảo mật, dữ liệu)
+  sourceRepos:
+    - https://github.com/Luo-Zhii/shop-gitops.git
+    - https://charts.jetstack.io
+    - https://charts.external-secrets.io
+    - https://kyverno.github.io/kyverno/
+    - https://argoproj.github.io/argo-helm
+    - https://kedacore.github.io/charts
+    - https://prometheus-community.github.io/helm-charts
+    - https://grafana.github.io/helm-charts
+    - https://grafana-community.github.io/helm-charts/
+    - https://open-telemetry.github.io/opentelemetry-helm-charts
+    - https://strimzi.io/charts/
+    - https://cloudnative-pg.io/charts/
+    - https://ot-container-kit.github.io/helm-charts
+    - https://mongodb.github.io/helm-charts
+    - https://opensearch-project.github.io/helm-charts/
+    - https://operator.min.io
+    - https://charts.longhorn.io
+    - https://metallb.github.io/metallb
+    - https://aws.github.io/eks-charts
+    - https://charts.chaos-mesh.org
+    - https://slok.github.io/sloth
+    - https://helm.releases.hashicorp.com
+    - https://kubernetes.github.io/ingress-nginx
+  destinations:
+    - {name: shopnow-dev, namespace: "*"}
+    - {name: shopnow-staging, namespace: "*"}
+    - {name: shopnow-prod-onprem, namespace: "*"}
+    - {name: shopnow-prod-aws, namespace: "*"}
+  clusterResourceWhitelist:
+    - {group: "*", kind: "*"}
+  orphanedResources: {warn: false}

@@ -1,0 +1,442 @@
+# Sinh theo bảng topic trong shop-microservice/docs/architecture.md §3. Mỗi topic có <topic>.dlq.
+# Key = subject (id thực thể) → thứ tự theo thực thể; số partition = mức song song tối đa của consumer (KEDA không vượt).
+---
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaTopic
+metadata:
+  name: identity.user.v1
+  namespace: kafka
+  labels:
+    strimzi.io/cluster: shopnow-kafka
+    shopnow.io/topic-kind: main
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+    shopnow.io/producer: "identity"
+    shopnow.io/consumers: "user-profile, notification"
+spec:
+  topicName: identity.user.v1
+  partitions: 3
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+    cleanup.policy: delete
+    compression.type: zstd
+---
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaTopic
+metadata:
+  name: identity.user.v1.dlq
+  namespace: kafka
+  labels:
+    strimzi.io/cluster: shopnow-kafka
+    shopnow.io/topic-kind: dlq
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+    shopnow.io/producer: "consumers of identity.user.v1"
+    shopnow.io/consumers: "ops (replay thủ công)"
+spec:
+  topicName: identity.user.v1.dlq
+  partitions: 1
+  replicas: 3
+  config:
+    retention.ms: "1209600000"
+    min.insync.replicas: "2"
+    cleanup.policy: delete
+    compression.type: zstd
+---
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaTopic
+metadata:
+  name: seller.shop.v1
+  namespace: kafka
+  labels:
+    strimzi.io/cluster: shopnow-kafka
+    shopnow.io/topic-kind: main
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+    shopnow.io/producer: "seller"
+    shopnow.io/consumers: "identity, catalog, notification"
+spec:
+  topicName: seller.shop.v1
+  partitions: 3
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+    cleanup.policy: delete
+    compression.type: zstd
+---
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaTopic
+metadata:
+  name: seller.shop.v1.dlq
+  namespace: kafka
+  labels:
+    strimzi.io/cluster: shopnow-kafka
+    shopnow.io/topic-kind: dlq
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+    shopnow.io/producer: "consumers of seller.shop.v1"
+    shopnow.io/consumers: "ops (replay thủ công)"
+spec:
+  topicName: seller.shop.v1.dlq
+  partitions: 1
+  replicas: 3
+  config:
+    retention.ms: "1209600000"
+    min.insync.replicas: "2"
+    cleanup.policy: delete
+    compression.type: zstd
+---
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaTopic
+metadata:
+  name: catalog.product.v1
+  namespace: kafka
+  labels:
+    strimzi.io/cluster: shopnow-kafka
+    shopnow.io/topic-kind: main
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+    shopnow.io/producer: "catalog"
+    shopnow.io/consumers: "search, inventory, ai-service"
+spec:
+  topicName: catalog.product.v1
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+    cleanup.policy: delete
+    compression.type: zstd
+---
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaTopic
+metadata:
+  name: catalog.product.v1.dlq
+  namespace: kafka
+  labels:
+    strimzi.io/cluster: shopnow-kafka
+    shopnow.io/topic-kind: dlq
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+    shopnow.io/producer: "consumers of catalog.product.v1"
+    shopnow.io/consumers: "ops (replay thủ công)"
+spec:
+  topicName: catalog.product.v1.dlq
+  partitions: 1
+  replicas: 3
+  config:
+    retention.ms: "1209600000"
+    min.insync.replicas: "2"
+    cleanup.policy: delete
+    compression.type: zstd
+---
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaTopic
+metadata:
+  name: review.v1
+  namespace: kafka
+  labels:
+    strimzi.io/cluster: shopnow-kafka
+    shopnow.io/topic-kind: main
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+    shopnow.io/producer: "review"
+    shopnow.io/consumers: "catalog, search, notification"
+spec:
+  topicName: review.v1
+  partitions: 3
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+    cleanup.policy: delete
+    compression.type: zstd
+---
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaTopic
+metadata:
+  name: review.v1.dlq
+  namespace: kafka
+  labels:
+    strimzi.io/cluster: shopnow-kafka
+    shopnow.io/topic-kind: dlq
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+    shopnow.io/producer: "consumers of review.v1"
+    shopnow.io/consumers: "ops (replay thủ công)"
+spec:
+  topicName: review.v1.dlq
+  partitions: 1
+  replicas: 3
+  config:
+    retention.ms: "1209600000"
+    min.insync.replicas: "2"
+    cleanup.policy: delete
+    compression.type: zstd
+---
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaTopic
+metadata:
+  name: inventory.command.v1
+  namespace: kafka
+  labels:
+    strimzi.io/cluster: shopnow-kafka
+    shopnow.io/topic-kind: main
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+    shopnow.io/producer: "order"
+    shopnow.io/consumers: "inventory"
+spec:
+  topicName: inventory.command.v1
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+    cleanup.policy: delete
+    compression.type: zstd
+---
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaTopic
+metadata:
+  name: inventory.command.v1.dlq
+  namespace: kafka
+  labels:
+    strimzi.io/cluster: shopnow-kafka
+    shopnow.io/topic-kind: dlq
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+    shopnow.io/producer: "consumers of inventory.command.v1"
+    shopnow.io/consumers: "ops (replay thủ công)"
+spec:
+  topicName: inventory.command.v1.dlq
+  partitions: 1
+  replicas: 3
+  config:
+    retention.ms: "1209600000"
+    min.insync.replicas: "2"
+    cleanup.policy: delete
+    compression.type: zstd
+---
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaTopic
+metadata:
+  name: inventory.event.v1
+  namespace: kafka
+  labels:
+    strimzi.io/cluster: shopnow-kafka
+    shopnow.io/topic-kind: main
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+    shopnow.io/producer: "inventory"
+    shopnow.io/consumers: "order, search"
+spec:
+  topicName: inventory.event.v1
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+    cleanup.policy: delete
+    compression.type: zstd
+---
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaTopic
+metadata:
+  name: inventory.event.v1.dlq
+  namespace: kafka
+  labels:
+    strimzi.io/cluster: shopnow-kafka
+    shopnow.io/topic-kind: dlq
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+    shopnow.io/producer: "consumers of inventory.event.v1"
+    shopnow.io/consumers: "ops (replay thủ công)"
+spec:
+  topicName: inventory.event.v1.dlq
+  partitions: 1
+  replicas: 3
+  config:
+    retention.ms: "1209600000"
+    min.insync.replicas: "2"
+    cleanup.policy: delete
+    compression.type: zstd
+---
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaTopic
+metadata:
+  name: payment.command.v1
+  namespace: kafka
+  labels:
+    strimzi.io/cluster: shopnow-kafka
+    shopnow.io/topic-kind: main
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+    shopnow.io/producer: "order"
+    shopnow.io/consumers: "payment"
+spec:
+  topicName: payment.command.v1
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+    cleanup.policy: delete
+    compression.type: zstd
+---
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaTopic
+metadata:
+  name: payment.command.v1.dlq
+  namespace: kafka
+  labels:
+    strimzi.io/cluster: shopnow-kafka
+    shopnow.io/topic-kind: dlq
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+    shopnow.io/producer: "consumers of payment.command.v1"
+    shopnow.io/consumers: "ops (replay thủ công)"
+spec:
+  topicName: payment.command.v1.dlq
+  partitions: 1
+  replicas: 3
+  config:
+    retention.ms: "1209600000"
+    min.insync.replicas: "2"
+    cleanup.policy: delete
+    compression.type: zstd
+---
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaTopic
+metadata:
+  name: payment.event.v1
+  namespace: kafka
+  labels:
+    strimzi.io/cluster: shopnow-kafka
+    shopnow.io/topic-kind: main
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+    shopnow.io/producer: "payment"
+    shopnow.io/consumers: "order, notification"
+spec:
+  topicName: payment.event.v1
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+    cleanup.policy: delete
+    compression.type: zstd
+---
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaTopic
+metadata:
+  name: payment.event.v1.dlq
+  namespace: kafka
+  labels:
+    strimzi.io/cluster: shopnow-kafka
+    shopnow.io/topic-kind: dlq
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+    shopnow.io/producer: "consumers of payment.event.v1"
+    shopnow.io/consumers: "ops (replay thủ công)"
+spec:
+  topicName: payment.event.v1.dlq
+  partitions: 1
+  replicas: 3
+  config:
+    retention.ms: "1209600000"
+    min.insync.replicas: "2"
+    cleanup.policy: delete
+    compression.type: zstd
+---
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaTopic
+metadata:
+  name: order.v1
+  namespace: kafka
+  labels:
+    strimzi.io/cluster: shopnow-kafka
+    shopnow.io/topic-kind: main
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+    shopnow.io/producer: "order"
+    shopnow.io/consumers: "cart, promotion, shipping, payment, review, notification, ai-service"
+spec:
+  topicName: order.v1
+  partitions: 12
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+    cleanup.policy: delete
+    compression.type: zstd
+---
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaTopic
+metadata:
+  name: order.v1.dlq
+  namespace: kafka
+  labels:
+    strimzi.io/cluster: shopnow-kafka
+    shopnow.io/topic-kind: dlq
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+    shopnow.io/producer: "consumers of order.v1"
+    shopnow.io/consumers: "ops (replay thủ công)"
+spec:
+  topicName: order.v1.dlq
+  partitions: 1
+  replicas: 3
+  config:
+    retention.ms: "1209600000"
+    min.insync.replicas: "2"
+    cleanup.policy: delete
+    compression.type: zstd
+---
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaTopic
+metadata:
+  name: shipping.v1
+  namespace: kafka
+  labels:
+    strimzi.io/cluster: shopnow-kafka
+    shopnow.io/topic-kind: main
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+    shopnow.io/producer: "shipping"
+    shopnow.io/consumers: "order, notification"
+spec:
+  topicName: shipping.v1
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+    cleanup.policy: delete
+    compression.type: zstd
+---
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaTopic
+metadata:
+  name: shipping.v1.dlq
+  namespace: kafka
+  labels:
+    strimzi.io/cluster: shopnow-kafka
+    shopnow.io/topic-kind: dlq
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+    shopnow.io/producer: "consumers of shipping.v1"
+    shopnow.io/consumers: "ops (replay thủ công)"
+spec:
+  topicName: shipping.v1.dlq
+  partitions: 1
+  replicas: 3
+  config:
+    retention.ms: "1209600000"
+    min.insync.replicas: "2"
+    cleanup.policy: delete
+    compression.type: zstd

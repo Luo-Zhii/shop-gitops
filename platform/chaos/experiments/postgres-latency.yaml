@@ -1,0 +1,22 @@
+apiVersion: chaos-mesh.org/v1alpha1
+kind: NetworkChaos
+metadata:
+  name: postgres-latency
+  namespace: shopnow
+  labels:
+    aiops.shopnow.io/experiment: postgres-latency
+    aiops.shopnow.io/fault-type: db-latency
+  annotations:
+    aiops.shopnow.io/expected-root-cause: postgres
+    aiops.shopnow.io/expected-signals: "p95 tăng đồng loạt mọi service dùng Postgres, cnpg_backends_waiting tăng"
+spec:
+  action: delay
+  mode: all
+  selector:
+    namespaces: [shopnow-data]
+    labelSelectors: {cnpg.io/cluster: shopnow-pg}
+  delay:
+    latency: 300ms
+    jitter: 50ms
+  direction: to
+  duration: 10m

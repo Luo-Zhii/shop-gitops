@@ -1,0 +1,39 @@
+# Prometheus + Alertmanager + Grafana. Route Alertmanager: platform/observability/alertmanager/values.yaml
+crds: {enabled: true}
+prometheus:
+  prometheusSpec:
+    retention: 15d
+    retentionSize: 45GB
+    # Nhận remote write từ OTel collector (spanmetrics/servicegraph) và Tempo metrics-generator
+    enableRemoteWriteReceiver: true
+    enableFeatures: [exemplar-storage]
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+    # externalLabels (cluster/env) đặt ở environments/<env>/addons/kube-prometheus-stack.yaml
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: longhorn
+          accessModes: [ReadWriteOnce]
+          resources: {requests: {storage: 50Gi}}
+grafana:
+  admin:
+    existingSecret: grafana-admin
+    userKey: admin-user
+    passwordKey: admin-password
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+      searchNamespace: ALL
+      folderAnnotation: grafana_folder
+      provider: {foldersFromFilesStructure: true}
+    datasources:
+      enabled: true
+      label: grafana_datasource
+      searchNamespace: ALL
+  persistence: {enabled: false}
+kube-state-metrics:
+  # Cho phép dashboard/alert đọc nhãn pod (rollouts-pod-template-hash...)
+  metricLabelsAllowlist: ["pods=[app.kubernetes.io/name,rollouts-pod-template-hash]"]

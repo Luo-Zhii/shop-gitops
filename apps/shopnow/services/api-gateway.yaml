@@ -1,0 +1,32 @@
+name: api-gateway
+port: 8080
+ingress:
+  enabled: true
+  hostPrefix: api
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: 10m
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"   # SSE /api/notification/notifications/stream
+uses:
+  redis: {enabled: true, db: 0}       # rate limit
+externalSecret:
+  sharedKeys: [INTERNAL_TOKEN]
+rollout:
+  enabled: true
+  trafficRouting: nginx               # prod-aws ghi đè thành alb
+autoscaling:
+  type: keda
+  minReplicas: 2
+  maxReplicas: 12
+  keda:
+    rpsPerPod: 150
+networkPolicy:
+  ingress:
+    fromGateway: false
+    fromIngressController: true
+    fromServices: [web]               # Next.js SSR gọi BFF
+resources:
+  requests: {cpu: 200m, memory: 192Mi}
+  limits: {cpu: "1", memory: 512Mi}
+metrics:
+  prometheusRule:
+    p95WarningSeconds: 0.8

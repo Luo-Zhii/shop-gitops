@@ -1,0 +1,5 @@
+replicaCount: 1
+monitoring:
+  podMonitorEnabled: true
+  podMonitorAdditionalLabels: {release: kube-prometheus-stack}
+  grafanaDashboard: {create: true, labels: {grafana_dashboard: "1"}}

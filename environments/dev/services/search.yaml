@@ -1,0 +1,7 @@
+# dev không chạy OpenSearch → dùng Postgres FTS
+env:
+  SEARCH_BACKEND: postgres
+uses:
+  opensearch: {enabled: false}
+externalSecret:
+  keys: []

@@ -1,0 +1,8 @@
+name: seller
+port: 8103
+uses:
+  postgres: {enabled: true, database: seller}
+  kafka: {enabled: true}              # producer seller.shop.v1
+networkPolicy:
+  ingress:
+    fromServices: [catalog, order, identity]   # /internal/shops/:id

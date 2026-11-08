@@ -1,0 +1,108 @@
+# Kafka KRaft (không ZooKeeper) do Strimzi quản lý. Pool "dual": controller + broker cùng node (đủ cho quy mô khoá luận);
+# prod lớn hơn nên tách pool controller/broker.
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaNodePool
+metadata:
+  name: dual
+  namespace: kafka
+  labels:
+    strimzi.io/cluster: shopnow-kafka
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  replicas: 3
+  roles: [controller, broker]
+  storage:
+    type: jbod
+    volumes:
+      - id: 0
+        type: persistent-claim
+        size: 50Gi
+        class: longhorn          # prod-aws: gp3 (patch ở environments/prod-aws/platform)
+        deleteClaim: false
+        kraftMetadata: shared
+  resources:
+    requests: {cpu: 500m, memory: 2Gi}
+    limits: {memory: 2Gi}
+  template:
+    pod:
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels: {strimzi.io/pool-name: dual}
+---
+apiVersion: kafka.strimzi.io/v1
+kind: Kafka
+metadata:
+  name: shopnow-kafka
+  namespace: kafka
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+spec:
+  kafka:
+    # Bỏ trống version/metadataVersion → dùng bản mặc định của Strimzi đã pin (strimzi-kafka-operator 1.3.1)
+    listeners:
+      - name: plain
+        port: 9092
+        type: internal
+        tls: false
+      - name: tls
+        port: 9093
+        type: internal
+        tls: true
+        authentication: {type: tls}
+    config:
+      default.replication.factor: 3
+      min.insync.replicas: 2
+      offsets.topic.replication.factor: 3
+      transaction.state.log.replication.factor: 3
+      transaction.state.log.min.isr: 2
+      auto.create.topics.enable: false
+      num.partitions: 3
+    rack:
+      topologyKey: topology.kubernetes.io/zone
+    metricsConfig:
+      type: jmxPrometheusExporter
+      valueFrom:
+        configMapKeyRef: {name: kafka-metrics, key: kafka-metrics-config.yml}
+  entityOperator:
+    topicOperator: {}
+    userOperator: {}
+  kafkaExporter:
+    # Xuất consumer lag (kafka_consumergroup_lag) cho dashboard & cảnh báo
+    topicRegex: ".*"
+    groupRegex: ".*"
+  cruiseControl: {}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kafka-metrics
+  namespace: kafka
+data:
+  kafka-metrics-config.yml: |
+    lowercaseOutputName: true
+    rules:
+      - pattern: kafka.server<type=(.+), name=(.+)><>Value
+        name: kafka_server_$1_$2
+        type: GAUGE
+      - pattern: kafka.server<type=(.+), name=(.+), topic=(.+)><>Count
+        name: kafka_server_$1_$2_total
+        type: COUNTER
+        labels: {topic: "$3"}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: shopnow-kafka
+  namespace: kafka
+  labels: {release: kube-prometheus-stack}
+spec:
+  selector:
+    matchExpressions:
+      - {key: strimzi.io/kind, operator: In, values: [Kafka]}
+  podMetricsEndpoints:
+    - port: tcp-prometheus
+      path: /metrics

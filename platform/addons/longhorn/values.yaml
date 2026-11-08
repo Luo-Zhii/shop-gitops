@@ -1,0 +1,12 @@
+persistence:
+  defaultClass: true
+  defaultClassReplicaCount: 3
+  reclaimPolicy: Retain
+defaultSettings:
+  defaultDataPath: /var/lib/longhorn
+  replicaSoftAntiAffinity: false
+  storageMinimalAvailablePercentage: 15
+  backupTarget: s3://shopnow-longhorn-backups@us-east-1/
+  backupTargetCredentialSecret: longhorn-backup-s3
+metrics:
+  serviceMonitor: {enabled: true, additionalLabels: {release: kube-prometheus-stack}}

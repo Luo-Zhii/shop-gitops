@@ -1,0 +1,12 @@
+# Vault HA Raft on-prem — nguồn bí mật cho External Secrets (auth kubernetes, role external-secrets)
+server:
+  ha:
+    enabled: true
+    replicas: 3
+    raft: {enabled: true, setNodeId: true}
+  dataStorage: {enabled: true, size: 10Gi, storageClass: longhorn}
+  auditStorage: {enabled: true, size: 10Gi, storageClass: longhorn}
+injector: {enabled: false}
+ui: {enabled: true}
+serverTelemetry:
+  serviceMonitor: {enabled: true, selectors: {release: kube-prometheus-stack}}

@@ -1,0 +1,43 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: disallow-latest-tag
+  annotations:
+    policies.kyverno.io/title: Disallow latest tag
+    policies.kyverno.io/category: Best Practices
+    policies.kyverno.io/severity: medium
+spec:
+  background: true
+  rules:
+    - name: require-image-tag
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+              namespaces: [shopnow]
+      validate:
+        failureAction: Enforce
+        message: "Image phải có tag cố định (không dùng tag ngầm định)."
+        foreach:
+          - list: "request.object.spec.[initContainers, containers][]"
+            deny:
+              conditions:
+                all:
+                  - key: "{{ contains(element.image, ':') }}"
+                    operator: Equals
+                    value: false
+    - name: disallow-latest
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+              namespaces: [shopnow]
+      validate:
+        failureAction: Enforce
+        message: "Cấm tag ':latest' — dùng sha-<commit> hoặc semver."
+        pattern:
+          spec:
+            =(initContainers):
+              - image: "!*:latest*"
+            containers:
+              - image: "!*:latest*"

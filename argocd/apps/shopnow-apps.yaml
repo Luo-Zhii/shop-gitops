@@ -1,0 +1,92 @@
+# Mỗi cụm (label shopnow.io/env + shopnow.io/provider) × mỗi service → một Application.
+# Thứ tự values: chart → apps/shopnow/values-common → apps/shopnow/services/<svc> → environments/<env>/values
+#                → environments/<env>/services/<svc> (tuỳ chọn) → environments/<env>/images.yaml (CI ghi)
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: shopnow-apps
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "10"
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  syncPolicy:
+    # Xoá/đổi generator không kéo theo xoá app đang chạy trên prod
+    preserveResourcesOnDeletion: true
+  generators:
+    - matrix:
+        generators:
+          - clusters:
+              selector:
+                matchExpressions:
+                  - {key: shopnow.io/env, operator: In, values: [dev, staging, prod-onprem, prod-aws]}
+                  - {key: shopnow.io/provider, operator: In, values: [onprem, aws]}
+          - list:
+              # wave: 0 quan sát → 1 identity (JWKS) → 2 domain → 3 order (saga) → 4 gateway → 5 web
+              elements:
+                - {service: aiops, wave: "0"}
+                - {service: identity, wave: "1"}
+                - {service: user-profile, wave: "2"}
+                - {service: seller, wave: "2"}
+                - {service: catalog, wave: "2"}
+                - {service: search, wave: "2"}
+                - {service: inventory, wave: "2"}
+                - {service: cart, wave: "2"}
+                - {service: promotion, wave: "2"}
+                - {service: payment, wave: "2"}
+                - {service: shipping, wave: "2"}
+                - {service: review, wave: "2"}
+                - {service: notification, wave: "2"}
+                - {service: ai-service, wave: "2"}
+                - {service: order, wave: "3"}
+                - {service: api-gateway, wave: "4"}
+                - {service: web, wave: "5"}
+  template:
+    metadata:
+      name: '{{ index .metadata.labels "shopnow.io/env" }}-{{ .service }}'
+      labels:
+        shopnow.io/env: '{{ index .metadata.labels "shopnow.io/env" }}'
+        shopnow.io/provider: '{{ index .metadata.labels "shopnow.io/provider" }}'
+        shopnow.io/service: '{{ .service }}'
+      annotations:
+        argocd.argoproj.io/sync-wave: '{{ .wave }}'
+      finalizers: [resources-finalizer.argocd.argoproj.io]
+    spec:
+      project: shopnow
+      revisionHistoryLimit: 10
+      source:
+        repoURL: https://github.com/Luo-Zhii/shop-gitops.git
+        targetRevision: main
+        path: charts/shopnow-service
+        helm:
+          releaseName: '{{ .service }}'
+          ignoreMissingValueFiles: true
+          valueFiles:
+            - ../../apps/shopnow/values-common.yaml
+            - '../../apps/shopnow/services/{{ .service }}.yaml'
+            - '../../environments/{{ index .metadata.labels "shopnow.io/env" }}/values.yaml'
+            - '../../environments/{{ index .metadata.labels "shopnow.io/env" }}/services/{{ .service }}.yaml'
+            - '../../environments/{{ index .metadata.labels "shopnow.io/env" }}/images.yaml'
+      destination:
+        name: '{{ .name }}'
+        namespace: shopnow
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - ServerSideApply=true
+          - PruneLast=true
+          - ApplyOutOfSyncOnly=true
+          - RespectIgnoreDifferences=true
+        retry:
+          limit: 10
+          backoff: {duration: 15s, factor: 2, maxDuration: 5m}
+      # replicas do HPA/KEDA quản lý; canary weight do Argo Rollouts ghi
+      ignoreDifferences:
+        - {group: apps, kind: Deployment, jsonPointers: [/spec/replicas]}
+        - {group: argoproj.io, kind: Rollout, jsonPointers: [/spec/replicas]}
+        - group: networking.k8s.io
+          kind: Ingress
+          jqPathExpressions: ['.metadata.annotations["alb.ingress.kubernetes.io/actions.api-gateway"]']

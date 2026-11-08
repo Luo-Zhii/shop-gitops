@@ -1,0 +1,9 @@
+name: user-profile
+port: 8102
+uses:
+  postgres: {enabled: true, database: user_profile}
+  redis: {enabled: true, db: 1}
+  kafka: {enabled: true}              # consumer identity.user.v1
+networkPolicy:
+  ingress:
+    fromServices: [order]             # /internal/addresses

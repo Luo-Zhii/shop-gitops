@@ -1,0 +1,69 @@
+# SLO khai báo bằng Sloth → controller sinh recording rule + cảnh báo multi-window multi-burn-rate
+# (page: 1h/5m @14.4x & 6h/30m @6x → severity=critical; ticket: 1d/2h @3x & 3d/6h @1x → severity=warning).
+# Cả hai đều được Alertmanager đẩy tới AIOps + Telegram. Cửa sổ SLO: 30 ngày.
+apiVersion: sloth.slok.dev/v1
+kind: PrometheusServiceLevel
+metadata:
+  name: shopnow
+  namespace: monitoring
+  labels: {release: kube-prometheus-stack}
+spec:
+  service: shopnow
+  labels:
+    team: shopnow
+  slos:
+    - name: gateway-availability
+      objective: 99.5
+      description: "api-gateway trả lời không lỗi 5xx (99.5% / 30 ngày)."
+      sli:
+        events:
+          errorQuery: sum(rate(http_server_requests_seconds_count{service="api-gateway",status=~"5.."}[{{.window}}]))
+          totalQuery: sum(rate(http_server_requests_seconds_count{service="api-gateway"}[{{.window}}]))
+      alerting:
+        name: ShopNowGatewayAvailabilityBurn
+        labels: {service: api-gateway, category: availability}
+        annotations:
+          summary: "api-gateway đang đốt error budget availability 99.5%"
+        pageAlert:
+          labels: {severity: critical}
+        ticketAlert:
+          labels: {severity: warning}
+    - name: checkout-latency
+      objective: 95
+      description: "p95 POST /checkout < 1.5s ⇔ ≥95% request checkout xong dưới 1.5s (histogram cần bucket le=1.5)."
+      sli:
+        events:
+          errorQuery: |
+            (
+              sum(rate(http_server_requests_seconds_count{service="order",route="/checkout",method="POST"}[{{.window}}]))
+              -
+              sum(rate(http_server_requests_seconds_bucket{service="order",route="/checkout",method="POST",le="1.5"}[{{.window}}]))
+            )
+          totalQuery: sum(rate(http_server_requests_seconds_count{service="order",route="/checkout",method="POST"}[{{.window}}]))
+      alerting:
+        name: ShopNowCheckoutLatencyBurn
+        labels: {service: order, category: latency}
+        annotations:
+          summary: "Checkout p95 vượt 1.5s quá ngân sách"
+        pageAlert:
+          labels: {severity: critical}
+        ticketAlert:
+          labels: {severity: warning}
+    - name: order-saga-success
+      objective: 99
+      description: >-
+        Saga đặt hàng kết thúc đúng (99%). Lỗi = đơn bị huỷ do hệ thống (timeout, reservation hết hạn, lỗi kỹ thuật);
+        không tính huỷ do người mua, hết hàng hay thẻ bị từ chối. Đồng bộ danh sách reason với service order.
+      sli:
+        events:
+          errorQuery: sum(rate(orders_cancelled_total{reason!~"BUYER_CANCELLED|OUT_OF_STOCK|PAYMENT_FAILED|PAYMENT_TIMEOUT"}[{{.window}}]))
+          totalQuery: sum(rate(orders_created_total[{{.window}}]))
+      alerting:
+        name: ShopNowOrderSagaBurn
+        labels: {service: order, category: saga}
+        annotations:
+          summary: "Tỉ lệ saga đặt hàng thất bại đốt error budget 99%"
+        pageAlert:
+          labels: {severity: critical}
+        ticketAlert:
+          labels: {severity: warning}

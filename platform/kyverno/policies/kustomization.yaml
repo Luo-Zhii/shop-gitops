@@ -1,0 +1,11 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+commonAnnotations:
+  argocd.argoproj.io/sync-wave: "-4"
+resources:
+  - verify-image-signatures.yaml
+  - disallow-latest-tag.yaml
+  - require-requests-limits.yaml
+  - require-run-as-non-root.yaml
+  - require-probes.yaml
+  - disallow-privileged.yaml

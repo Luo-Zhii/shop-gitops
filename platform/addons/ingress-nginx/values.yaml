@@ -1,0 +1,15 @@
+controller:
+  replicaCount: 2
+  ingressClassResource: {name: nginx, default: true}
+  service:
+    type: LoadBalancer               # IP cấp bởi MetalLB
+    externalTrafficPolicy: Local
+  config:
+    use-forwarded-headers: "true"
+    enable-opentelemetry: "true"
+    otlp-collector-host: otel-collector.observability.svc
+    otlp-collector-port: "4317"
+  metrics:
+    enabled: true
+    serviceMonitor: {enabled: true, additionalLabels: {release: kube-prometheus-stack}}
+  podDisruptionBudget: {minAvailable: 1}

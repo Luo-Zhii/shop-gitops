@@ -1,0 +1,3 @@
+# staging: cho phép AIOps tự khắc phục (abort rollout, restart pod) trong game-day
+env:
+  AUTO_REMEDIATION: "true"

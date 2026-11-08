@@ -1,0 +1,6 @@
+# Thay đổi prod & nền tảng cần platform team duyệt (branch protection: Require review from Code Owners)
+/environments/prod-onprem/   @Luo-Zhii
+/environments/prod-aws/      @Luo-Zhii
+/platform/                   @Luo-Zhii
+/argocd/                     @Luo-Zhii
+/charts/                     @Luo-Zhii

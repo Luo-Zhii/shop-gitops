@@ -1,0 +1,19 @@
+name: search
+port: 8105
+uses:
+  postgres: {enabled: true, database: search}   # FTS dự phòng / trạng thái index
+  opensearch: {enabled: true}
+  kafka: {enabled: true}              # consumer catalog.product.v1, review.v1, inventory.event.v1
+env:
+  SEARCH_BACKEND: opensearch          # dev ghi đè thành postgres
+externalSecret:
+  keys: [OPENSEARCH_USERNAME, OPENSEARCH_PASSWORD]
+autoscaling:
+  type: keda
+  keda:
+    rpsPerPod: 80
+    kafkaLag:
+      - {topic: catalog.product.v1, consumerGroup: search, lagThreshold: 200}
+networkPolicy:
+  ingress:
+    fromServices: [ai-service]

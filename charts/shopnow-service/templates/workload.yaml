@@ -1,0 +1,60 @@
+{{- $r := .Values.rollout -}}
+apiVersion: {{ include "svc.workloadApiVersion" . }}
+kind: {{ include "svc.workloadKind" . }}
+metadata:
+  name: {{ include "svc.name" . }}
+  labels:
+    {{- include "svc.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  revisionHistoryLimit: 5
+  selector:
+    matchLabels:
+      {{- include "svc.selectorLabels" . | nindent 6 }}
+  {{- if $r.enabled }}
+  strategy:
+    canary:
+      {{- if ne $r.trafficRouting "none" }}
+      stableService: {{ include "svc.name" . }}
+      canaryService: {{ include "svc.name" . }}-canary
+      trafficRouting:
+        {{- if eq $r.trafficRouting "nginx" }}
+        nginx:
+          stableIngress: {{ include "svc.name" . }}
+        {{- else if eq $r.trafficRouting "alb" }}
+        alb:
+          ingress: {{ include "svc.name" . }}
+          servicePort: {{ .Values.service.port }}
+        {{- end }}
+      {{- end }}
+      maxSurge: "25%"
+      maxUnavailable: 0
+      abortScaleDownDelaySeconds: {{ $r.abortScaleDownDelaySeconds }}
+      {{- if ne $r.trafficRouting "none" }}
+      scaleDownDelaySeconds: {{ $r.scaleDownDelaySeconds }}
+      {{- end }}
+      {{- if $r.analysis.enabled }}
+      analysis:
+        templates:
+          - templateName: {{ include "svc.name" . }}-canary-health
+        startingStep: {{ $r.analysis.startingStep }}
+        args:
+          - name: service-name
+            value: {{ include "svc.name" . }}
+          - name: canary-hash
+            valueFrom:
+              podTemplateHashValue: Latest
+      {{- end }}
+      steps:
+        {{- toYaml $r.steps | nindent 8 }}
+  {{- else }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 0
+  {{- end }}
+  template:
+    {{- include "svc.podTemplate" . | nindent 4 }}

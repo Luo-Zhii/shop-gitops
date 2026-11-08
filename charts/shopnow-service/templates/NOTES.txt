@@ -1,0 +1,8 @@
+{{ include "svc.name" . }} ({{ include "svc.workloadKind" . }}) — image {{ include "svc.image" . }}
+env={{ .Values.global.env }} provider={{ .Values.global.provider }}
+{{- if .Values.ingress.enabled }}
+URL: https://{{ include "svc.host" . }}
+{{- end }}
+{{- if .Values.rollout.enabled }}
+Theo dõi canary: kubectl argo rollouts get rollout {{ include "svc.name" . }} -n {{ .Release.Namespace }} --watch
+{{- end }}

@@ -1,0 +1,39 @@
+# DaemonSet đọc log stdout (pino JSON) của pod → Loki OTLP; trace/metric đi qua gateway (platform/observability/otel-collector)
+fullnameOverride: otel-agent
+mode: daemonset
+image: {repository: otel/opentelemetry-collector-contrib}
+presets:
+  logsCollection: {enabled: true, includeCollectorLogs: false}
+  kubernetesAttributes: {enabled: true, extractAllPodLabels: false}
+config:
+  processors:
+    batch: {}
+    memory_limiter: {check_interval: 5s, limit_percentage: 80, spike_limit_percentage: 25}
+    # Chỉ giữ log namespace ứng dụng
+    filter/shopnow:
+      logs:
+        log_record:
+          - 'resource.attributes["k8s.namespace.name"] != "shopnow"'
+    transform/json:
+      log_statements:
+        - context: log
+          statements:
+            - merge_maps(cache, ParseJSON(body), "upsert") where IsMatch(body, "^\\{")
+            - set(trace_id.string, cache["trace_id"]) where cache["trace_id"] != nil
+            - set(span_id.string, cache["span_id"]) where cache["span_id"] != nil
+            - set(attributes["level"], cache["level"]) where cache["level"] != nil
+            - set(resource.attributes["service.name"], cache["service"]) where cache["service"] != nil
+  exporters:
+    otlphttp/loki:
+      endpoint: http://loki-gateway.observability.svc/otlp
+  service:
+    pipelines:
+      logs:
+        receivers: [filelog]
+        processors: [memory_limiter, k8sattributes, filter/shopnow, transform/json, batch]
+        exporters: [otlphttp/loki]
+      traces: null
+      metrics: null
+resources:
+  requests: {cpu: 50m, memory: 128Mi}
+  limits: {memory: 256Mi}

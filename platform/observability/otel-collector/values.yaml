@@ -1,0 +1,92 @@
+# OTel Collector gateway (Deployment) — app gửi OTLP HTTP tới http://otel-collector.observability.svc:4318
+#   traces  → k8sattributes → batch → Tempo + connector spanmetrics + servicegraph
+#   metrics (connector + OTLP) → Prometheus remote write (nhãn source=otel để không đụng metric của Tempo metrics-generator)
+#   logs (OTLP) → Loki
+fullnameOverride: otel-collector
+mode: deployment
+replicaCount: 2
+image: {repository: otel/opentelemetry-collector-contrib}
+presets:
+  kubernetesAttributes: {enabled: true}
+podDisruptionBudget: {enabled: true, minAvailable: 1}
+ports:
+  jaeger-compact: {enabled: false}
+  jaeger-thrift: {enabled: false}
+  jaeger-grpc: {enabled: false}
+  zipkin: {enabled: false}
+  metrics: {enabled: true}
+serviceMonitor:
+  enabled: true
+  extraLabels: {release: kube-prometheus-stack}
+config:
+  receivers:
+    jaeger: null
+    zipkin: null
+    prometheus: null
+    otlp:
+      protocols:
+        grpc: {endpoint: "${env:MY_POD_IP}:4317"}
+        http: {endpoint: "${env:MY_POD_IP}:4318"}
+  processors:
+    memory_limiter: {check_interval: 5s, limit_percentage: 80, spike_limit_percentage: 25}
+    batch: {send_batch_size: 8192, timeout: 5s}
+    k8sattributes:
+      extract:
+        metadata: [k8s.namespace.name, k8s.pod.name, k8s.deployment.name, k8s.node.name]
+        labels:
+          - {tag_name: app.version, key: app.kubernetes.io/version, from: pod}
+    resource:
+      attributes:
+        - {key: k8s.cluster.name, value: "${env:CLUSTER_NAME}", action: upsert}
+  connectors:
+    spanmetrics:
+      namespace: traces.span.metrics
+      histogram:
+        explicit:
+          buckets: [5ms, 10ms, 25ms, 50ms, 100ms, 250ms, 500ms, 1s, 1.5s, 2.5s, 5s, 10s]
+      dimensions:
+        - name: http.route
+        - name: http.request.method
+        - name: http.response.status_code
+        - name: messaging.destination.name
+      exemplars: {enabled: true}
+      metrics_flush_interval: 15s
+    servicegraph:
+      latency_histogram_buckets: [10ms, 50ms, 100ms, 250ms, 500ms, 1s, 2.5s, 5s]
+      dimensions: [deployment.environment.name]
+      store: {ttl: 10s, max_items: 10000}
+      virtual_node_peer_attributes: [db.system, messaging.system, peer.service]
+  exporters:
+    otlp/tempo:
+      endpoint: tempo.observability.svc:4317
+      tls: {insecure: true}
+    prometheusremotewrite:
+      endpoint: http://kube-prometheus-stack-prometheus.monitoring.svc:9090/api/v1/write
+      external_labels: {source: otel}
+      resource_to_telemetry_conversion: {enabled: true}
+    otlphttp/loki:
+      endpoint: http://loki-gateway.observability.svc/otlp
+  service:
+    pipelines:
+      traces:
+        receivers: [otlp]
+        processors: [memory_limiter, k8sattributes, resource, batch]
+        exporters: [otlp/tempo, spanmetrics, servicegraph]
+      metrics/traces:
+        receivers: [spanmetrics, servicegraph]
+        processors: [memory_limiter, batch]
+        exporters: [prometheusremotewrite]
+      metrics:
+        receivers: [otlp]
+        processors: [memory_limiter, k8sattributes, resource, batch]
+        exporters: [prometheusremotewrite]
+      logs:
+        receivers: [otlp]
+        processors: [memory_limiter, k8sattributes, resource, batch]
+        exporters: [otlphttp/loki]
+extraEnvs:
+  - name: CLUSTER_NAME
+    valueFrom: {configMapKeyRef: {name: cluster-info, key: name, optional: true}}
+resources:
+  requests: {cpu: 200m, memory: 512Mi}
+  limits: {memory: 1Gi}

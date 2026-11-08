@@ -1,0 +1,73 @@
+# MongoDB ReplicaSet (MongoDB Community Operator) cho review + notification — chạy trong cụm ở mọi môi trường.
+apiVersion: mongodbcommunity.mongodb.com/v1
+kind: MongoDBCommunity
+metadata:
+  name: shopnow-mongo
+  namespace: shopnow-data
+  annotations:
+    argocd.argoproj.io/sync-wave: "4"
+spec:
+  members: 3
+  type: ReplicaSet
+  version: "7.0.12"
+  security:
+    authentication:
+      modes: [SCRAM]
+  users:
+    - name: review
+      db: admin
+      passwordSecretRef: {name: mongo-review}
+      scramCredentialsSecretName: review-scram
+      roles:
+        - {name: readWrite, db: review}
+    - name: notification
+      db: admin
+      passwordSecretRef: {name: mongo-notification}
+      scramCredentialsSecretName: notification-scram
+      roles:
+        - {name: readWrite, db: notification}
+  additionalMongodConfig:
+    storage.wiredTiger.engineConfig.journalCompressor: zlib
+  statefulSet:
+    spec:
+      volumeClaimTemplates:
+        - metadata: {name: data-volume}
+          spec:
+            storageClassName: longhorn
+            accessModes: [ReadWriteOnce]
+            resources:
+              requests: {storage: 20Gi}
+        - metadata: {name: logs-volume}
+          spec:
+            storageClassName: longhorn
+            accessModes: [ReadWriteOnce]
+            resources:
+              requests: {storage: 2Gi}
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: mongo-review
+  namespace: shopnow-data
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  refreshInterval: 1h
+  secretStoreRef: {kind: ClusterSecretStore, name: vault}
+  target: {name: mongo-review}
+  data:
+    - {secretKey: password, remoteRef: {key: shopnow/review, property: mongo_password}}
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: mongo-notification
+  namespace: shopnow-data
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  refreshInterval: 1h
+  secretStoreRef: {kind: ClusterSecretStore, name: vault}
+  target: {name: mongo-notification}
+  data:
+    - {secretKey: password, remoteRef: {key: shopnow/notification, property: mongo_password}}

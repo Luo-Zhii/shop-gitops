@@ -1,0 +1,12 @@
+clusterName: opensearch-cluster
+nodeGroup: master
+replicas: 3
+singleNode: false
+persistence: {enabled: true, size: 20Gi}
+extraEnvs:
+  - name: OPENSEARCH_INITIAL_ADMIN_PASSWORD
+    valueFrom: {secretKeyRef: {name: opensearch-admin, key: password}}
+resources:
+  requests: {cpu: 500m, memory: 2Gi}
+  limits: {memory: 2Gi}
+opensearchJavaOpts: "-Xms1g -Xmx1g"

@@ -1,0 +1,9 @@
+admissionController:
+  replicas: 3
+  serviceMonitor: {enabled: true, additionalLabels: {release: kube-prometheus-stack}}
+backgroundController: {replicas: 2}
+cleanupController: {replicas: 2}
+reportsController: {replicas: 2}
+config:
+  # Không chặn namespace hệ thống / addon
+  resourceFiltersExcludeNamespaces: [kube-system, kyverno, argocd]

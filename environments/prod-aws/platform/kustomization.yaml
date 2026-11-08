@@ -1,0 +1,29 @@
+# prod-aws (EKS): Postgres=RDS, Redis=ElastiCache, object=S3 → không có CNPG/redis/MinIO/MetalLB/Vault trong cụm
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../../platform/namespaces
+  - ../../../platform/storage/gp3
+  - ../../../platform/secrets/aws
+  - ../../../platform/kyverno/policies
+  - ../../../platform/kafka
+  - ../../../platform/data/mongodb
+  - ../../../platform/data/opensearch
+  - ../../../platform/observability
+  - ../../../platform/slo
+configMapGenerator:
+  - name: cluster-info
+    namespace: observability
+    literals: [name=shopnow-prod-aws, env=prod-aws, provider=aws]
+generatorOptions: {disableNameSuffixHash: true}
+patches:
+  - target: {kind: ExternalSecret}
+    patch: |-
+      - {op: replace, path: /spec/secretStoreRef/name, value: aws-secrets-manager}
+  - target: {kind: KafkaNodePool}
+    patch: |-
+      - {op: replace, path: /spec/storage/volumes/0/class, value: gp3}
+  - target: {kind: MongoDBCommunity}
+    patch: |-
+      - {op: replace, path: /spec/statefulSet/spec/volumeClaimTemplates/0/spec/storageClassName, value: gp3}
+      - {op: replace, path: /spec/statefulSet/spec/volumeClaimTemplates/1/spec/storageClassName, value: gp3}

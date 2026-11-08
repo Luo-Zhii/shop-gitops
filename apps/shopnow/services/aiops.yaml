@@ -1,0 +1,37 @@
+# AIOps: nhận webhook Alertmanager /webhooks/alertmanager, phát hiện bất thường, RCA, gợi ý/khắc phục
+name: aiops
+component: aiops
+port: 8120
+service:
+  port: 8120                          # Alertmanager gọi http://aiops.shopnow.svc:8120/webhooks/alertmanager
+uses:
+  postgres: {enabled: true, database: aiops}   # lưu incident, MTTD/MTTR
+externalSecret:
+  keys: [AIOPS_WEBHOOK_TOKEN, TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, ANTHROPIC_API_KEY]
+  sharedKeys: []
+env:
+  PROMETHEUS_URL: http://kube-prometheus-stack-prometheus.monitoring.svc:9090
+  ALERTMANAGER_URL: http://kube-prometheus-stack-alertmanager.monitoring.svc:9093
+  LOKI_URL: http://loki-gateway.observability.svc
+  TEMPO_URL: http://tempo.observability.svc:3200
+  GRAFANA_URL: http://kube-prometheus-stack-grafana.monitoring.svc
+  ANOMALY_EVAL_INTERVAL_SECONDS: "60"
+  AUTO_REMEDIATION: "false"           # bật theo môi trường (dev/staging)
+autoscaling:
+  enabled: false
+replicaCount: 1
+networkPolicy:
+  ingress:
+    fromGateway: false                # Alertmanager (namespace monitoring) đã được mở sẵn
+  egress:
+    httpsCIDRs: [0.0.0.0/0]           # Telegram API, LLM
+    extra:
+      - to:
+          - namespaceSelector: {matchLabels: {kubernetes.io/metadata.name: monitoring}}
+        ports: [{port: 9090, protocol: TCP}, {port: 9093, protocol: TCP}, {port: 80, protocol: TCP}, {port: 3000, protocol: TCP}]
+      - to:
+          - namespaceSelector: {matchLabels: {kubernetes.io/metadata.name: observability}}
+        ports: [{port: 80, protocol: TCP}, {port: 3100, protocol: TCP}, {port: 3200, protocol: TCP}]
+resources:
+  requests: {cpu: 200m, memory: 512Mi}
+  limits: {cpu: "2", memory: 1536Mi}

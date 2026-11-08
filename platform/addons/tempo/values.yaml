@@ -1,0 +1,18 @@
+fullnameOverride: tempo
+tempo:
+  retention: 168h
+  # metrics-generator: sinh traces_service_graph_* và traces_spanmetrics_* → Prometheus (remote write)
+  metricsGenerator:
+    enabled: true
+    remoteWriteUrl: http://kube-prometheus-stack-prometheus.monitoring.svc:9090/api/v1/write
+  overrides:
+    defaults:
+      metrics_generator:
+        processors: [service-graphs, span-metrics]
+  receivers:
+    otlp:
+      protocols:
+        grpc: {endpoint: "0.0.0.0:4317"}
+        http: {endpoint: "0.0.0.0:4318"}
+persistence: {enabled: true, size: 20Gi}
+serviceMonitor: {enabled: true, additionalLabels: {release: kube-prometheus-stack}}

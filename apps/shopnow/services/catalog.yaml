@@ -1,0 +1,22 @@
+name: catalog
+port: 8104
+uses:
+  postgres: {enabled: true, database: catalog}
+  kafka: {enabled: true}              # producer catalog.product.v1, consumer seller.shop.v1, review.v1
+  s3: {enabled: true}                 # ảnh sản phẩm (MinIO on-prem / S3 trên AWS, presigned PUT)
+env:
+  SEED_DEMO: "false"
+rollout:
+  enabled: true
+autoscaling:
+  type: keda
+  minReplicas: 2
+  maxReplicas: 10
+  keda:
+    rpsPerPod: 100
+networkPolicy:
+  ingress:
+    fromServices: [order, cart, ai-service]   # /internal/skus, gợi ý
+resources:
+  requests: {cpu: 150m, memory: 192Mi}
+  limits: {cpu: "1", memory: 512Mi}

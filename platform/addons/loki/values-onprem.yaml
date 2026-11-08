@@ -1,0 +1,12 @@
+loki:
+  storage:
+    s3:
+      endpoint: http://minio.shopnow-data.svc
+      region: us-east-1
+      s3ForcePathStyle: true
+      insecure: true
+singleBinary:
+  persistence: {storageClass: longhorn}
+  extraEnvFrom:
+    - secretRef: {name: loki-s3}          # AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY (ExternalSecret)
+  extraArgs: [-config.expand-env=true]

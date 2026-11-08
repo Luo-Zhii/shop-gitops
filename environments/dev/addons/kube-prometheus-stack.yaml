@@ -1,0 +1,13 @@
+# Ghi đè kube-prometheus-stack cho dev
+prometheus:
+  prometheusSpec:
+    externalLabels: {cluster: shopnow-dev, env: dev}
+    retention: 3d
+    replicas: 1
+grafana:
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    hosts: [grafana.dev.luo.io.vn]
+alertmanager:
+  alertmanagerSpec: {replicas: 1}

@@ -1,0 +1,69 @@
+# Ghép vào kube-prometheus-stack (valueFiles thứ 2). Alert severity critical|warning → AIOps webhook + Telegram.
+alertmanager:
+  alertmanagerSpec:
+    replicas: 2
+    # Secret alertmanager-shopnow (ExternalSecret platform/observability/alertmanager/secrets.yaml)
+    # gắn tại /etc/alertmanager/secrets/alertmanager-shopnow/
+    secrets: [alertmanager-shopnow]
+  config:
+    global:
+      resolve_timeout: 5m
+    route:
+      receiver: "null"
+      group_by: [alertname, service, env]
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 4h
+      routes:
+        - receiver: "null"
+          matchers: ['alertname =~ "Watchdog|InfoInhibitor"']
+        # 1) AIOps nhận MỌI alert critical/warning (cả resolved) để tính MTTD/MTTR và RCA
+        - receiver: aiops
+          matchers: ['severity =~ "critical|warning"']
+          group_wait: 10s
+          group_interval: 1m
+          continue: true
+        # 2) Người trực nhận Telegram
+        - receiver: telegram-critical
+          matchers: ['severity = "critical"']
+          repeat_interval: 1h
+        - receiver: telegram-warning
+          matchers: ['severity = "warning"']
+          group_interval: 15m
+    inhibit_rules:
+      - source_matchers: ['severity = "critical"']
+        target_matchers: ['severity = "warning"']
+        equal: [alertname, service]
+    receivers:
+      - name: "null"
+      - name: aiops
+        webhook_configs:
+          - url: http://aiops.shopnow.svc:8120/webhooks/alertmanager
+            send_resolved: true
+            max_alerts: 0
+            http_config:
+              authorization:
+                type: Bearer
+                credentials_file: /etc/alertmanager/secrets/alertmanager-shopnow/aiops-webhook-token
+      - name: telegram-critical
+        telegram_configs:
+          - bot_token_file: /etc/alertmanager/secrets/alertmanager-shopnow/telegram-bot-token
+            chat_id: -1000000000000           # nhóm trực ShopNow — thay bằng chat id thật
+            parse_mode: HTML
+            send_resolved: true
+            message: |-
+              {{ if eq .Status "firing" }}🔥{{ else }}✅{{ end }} <b>[{{ .Status | toUpper }}] {{ .CommonLabels.alertname }}</b>
+              env={{ .CommonLabels.env }} service={{ .CommonLabels.service }} severity={{ .CommonLabels.severity }}
+              {{ range .Alerts }}• {{ .Annotations.summary }}
+              {{ end }}
+      - name: telegram-warning
+        telegram_configs:
+          - bot_token_file: /etc/alertmanager/secrets/alertmanager-shopnow/telegram-bot-token
+            chat_id: -1000000000000
+            parse_mode: HTML
+            disable_notifications: true
+            send_resolved: true
+            message: |-
+              ⚠️ <b>{{ .CommonLabels.alertname }}</b> env={{ .CommonLabels.env }} service={{ .CommonLabels.service }}
+              {{ range .Alerts }}• {{ .Annotations.summary }}
+              {{ end }}

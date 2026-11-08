@@ -1,0 +1,46 @@
+# cert-manager ACME (on-prem). DNS-01 qua Cloudflare để cấp được cả khi ingress chưa public.
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+  annotations:
+    argocd.argoproj.io/sync-wave: "-5"
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: ops@luo.io.vn
+    privateKeySecretRef: {name: letsencrypt-prod-account}
+    solvers:
+      - dns01:
+          cloudflare:
+            apiTokenSecretRef: {name: cloudflare-api-token, key: api-token}
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-staging
+  annotations:
+    argocd.argoproj.io/sync-wave: "-5"
+spec:
+  acme:
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    email: ops@luo.io.vn
+    privateKeySecretRef: {name: letsencrypt-staging-account}
+    solvers:
+      - dns01:
+          cloudflare:
+            apiTokenSecretRef: {name: cloudflare-api-token, key: api-token}
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: cloudflare-api-token
+  namespace: cert-manager
+  annotations:
+    argocd.argoproj.io/sync-wave: "-4"
+spec:
+  refreshInterval: 1h
+  secretStoreRef: {kind: ClusterSecretStore, name: vault}
+  target: {name: cloudflare-api-token}
+  data:
+    - {secretKey: api-token, remoteRef: {key: shopnow/cloudflare, property: api_token}}

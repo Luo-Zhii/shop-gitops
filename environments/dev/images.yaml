@@ -1,0 +1,21 @@
+# CI GHI FILE NÀY — không sửa tay (trừ khi rollback bằng git revert).
+# Cập nhật: yq -i '.images["order"].tag = "sha-abc1234" | .images["order"].digest = "sha256:..."' environments/dev/images.yaml
+# digest (nếu có) được ưu tiên khi kéo image; Kyverno verifyImages cũng ghim digest.
+images:
+  api-gateway: {tag: "sha-0000000", digest: ""}
+  identity: {tag: "sha-0000000", digest: ""}
+  user-profile: {tag: "sha-0000000", digest: ""}
+  seller: {tag: "sha-0000000", digest: ""}
+  catalog: {tag: "sha-0000000", digest: ""}
+  search: {tag: "sha-0000000", digest: ""}
+  inventory: {tag: "sha-0000000", digest: ""}
+  cart: {tag: "sha-0000000", digest: ""}
+  promotion: {tag: "sha-0000000", digest: ""}
+  order: {tag: "sha-0000000", digest: ""}
+  payment: {tag: "sha-0000000", digest: ""}
+  shipping: {tag: "sha-0000000", digest: ""}
+  review: {tag: "sha-0000000", digest: ""}
+  notification: {tag: "sha-0000000", digest: ""}
+  ai-service: {tag: "sha-0000000", digest: ""}
+  web: {tag: "sha-0000000", digest: ""}
+  aiops: {tag: "sha-0000000", digest: ""}

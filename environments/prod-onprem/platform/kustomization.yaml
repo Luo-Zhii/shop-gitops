@@ -1,0 +1,38 @@
+# prod-onprem: backup Postgres đẩy sang S3 ap-southeast-1 (bản sao ngoài DC → khôi phục được trên AWS khi DC sập)
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../../platform/namespaces
+  - ../../../platform/network/metallb
+  - ../../../platform/network/cert-manager
+  - ../../../platform/secrets/vault
+  - ../../../platform/kyverno/policies
+  - ../../../platform/kafka
+  - ../../../platform/postgres
+  - ../../../platform/data/redis
+  - ../../../platform/data/mongodb
+  - ../../../platform/data/opensearch
+  - ../../../platform/data/onprem-objectstore
+  - ../../../platform/observability
+  - ../../../platform/slo
+configMapGenerator:
+  - name: cluster-info
+    namespace: observability
+    literals: [name=shopnow-prod-onprem, env=prod-onprem, provider=onprem]
+generatorOptions: {disableNameSuffixHash: true}
+patches:
+  - target: {kind: ClusterSecretStore, name: vault}
+    patch: |-
+      - {op: replace, path: /spec/provider/vault/path, value: kv-prod}
+  - target: {kind: ObjectStore, name: shopnow-pg-backup}
+    patch: |-
+      - {op: replace, path: /spec/configuration/destinationPath, value: "s3://shopnow-prod-pg-backups-apse1/onprem/"}
+      - {op: remove, path: /spec/configuration/endpointURL}
+      - {op: add, path: /spec/configuration/s3Credentials/region, value: {name: pg-backup-s3, key: AWS_REGION}}
+  - target: {kind: ExternalSecret, name: pg-backup-s3}
+    patch: |-
+      - {op: add, path: /spec/data/-, value: {secretKey: AWS_REGION, remoteRef: {key: shopnow/pg-backup, property: region}}}
+  - target: {kind: Cluster, group: postgresql.cnpg.io}
+    patch: |-
+      - {op: replace, path: /spec/storage/size, value: 200Gi}
+      - {op: replace, path: /spec/walStorage/size, value: 50Gi}

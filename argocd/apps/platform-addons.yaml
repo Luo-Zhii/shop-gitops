@@ -1,0 +1,144 @@
+# Addon nền tảng = Helm chart chính thức, PIN version (đổi version = PR). Điều kiện theo nhãn cụm:
+#   shopnow.io/provider (onprem|aws) và shopnow.io/env. Values: platform/addons/<addon>/values[-<provider>].yaml
+#   (+ extraValues) + environments/<env>/addons/<addon>.yaml (tuỳ chọn).
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: platform-addons
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  syncPolicy:
+    preserveResourcesOnDeletion: true
+  generators:
+    # --- Mọi cụm
+    - matrix:
+        generators:
+          - clusters:
+              selector:
+                matchExpressions:
+                  - {key: shopnow.io/env, operator: Exists}
+          - list:
+              elements:
+                - {addon: cert-manager, chart: cert-manager, repoURL: 'https://charts.jetstack.io', version: 'v1.21.3', namespace: cert-manager, wave: '-10', valuesDir: platform/addons/cert-manager, extraValues: []}
+                - {addon: external-secrets, chart: external-secrets, repoURL: 'https://charts.external-secrets.io', version: '2.14.0', namespace: external-secrets, wave: '-10', valuesDir: platform/addons/external-secrets, extraValues: []}
+                - {addon: kube-prometheus-stack, chart: kube-prometheus-stack, repoURL: 'https://prometheus-community.github.io/helm-charts', version: '93.0.0', namespace: monitoring, wave: '-9', valuesDir: platform/addons/kube-prometheus-stack, extraValues: [platform/observability/alertmanager/values.yaml]}
+                - {addon: kyverno, chart: kyverno, repoURL: 'https://kyverno.github.io/kyverno/', version: '3.9.2', namespace: kyverno, wave: '-9', valuesDir: platform/addons/kyverno, extraValues: []}
+                - {addon: argo-rollouts, chart: argo-rollouts, repoURL: 'https://argoproj.github.io/argo-helm', version: '2.43.10', namespace: argo-rollouts, wave: '-8', valuesDir: platform/addons/argo-rollouts, extraValues: []}
+                - {addon: keda, chart: keda, repoURL: 'https://kedacore.github.io/charts', version: '2.21.0', namespace: keda, wave: '-8', valuesDir: platform/addons/keda, extraValues: []}
+                - {addon: strimzi-kafka-operator, chart: strimzi-kafka-operator, repoURL: 'https://strimzi.io/charts/', version: '1.3.1', namespace: kafka, wave: '-8', valuesDir: platform/addons/strimzi-kafka-operator, extraValues: []}
+                - {addon: mongodb-community-operator, chart: community-operator, repoURL: 'https://mongodb.github.io/helm-charts', version: '0.13.0', namespace: shopnow-data, wave: '-8', valuesDir: platform/addons/mongodb-community-operator, extraValues: []}
+                - {addon: loki, chart: loki, repoURL: 'https://grafana.github.io/helm-charts', version: '7.5.0', namespace: observability, wave: '-7', valuesDir: platform/addons/loki, extraValues: []}
+                - {addon: tempo, chart: tempo, repoURL: 'https://grafana-community.github.io/helm-charts/', version: '3.2.1', namespace: observability, wave: '-7', valuesDir: platform/addons/tempo, extraValues: []}
+                - {addon: otel-collector, chart: opentelemetry-collector, repoURL: 'https://open-telemetry.github.io/opentelemetry-helm-charts', version: '0.178.2', namespace: observability, wave: '-6', valuesDir: platform/observability/otel-collector, extraValues: []}
+                - {addon: otel-agent, chart: opentelemetry-collector, repoURL: 'https://open-telemetry.github.io/opentelemetry-helm-charts', version: '0.178.2', namespace: observability, wave: '-6', valuesDir: platform/addons/otel-agent, extraValues: []}
+                - {addon: sloth, chart: sloth, repoURL: 'https://slok.github.io/sloth', version: '0.16.0', namespace: monitoring, wave: '-6', valuesDir: platform/addons/sloth, extraValues: []}
+    # --- Chỉ on-prem (provider=onprem)
+    - matrix:
+        generators:
+          - clusters:
+              selector:
+                matchExpressions:
+                  - {key: shopnow.io/env, operator: Exists}
+                  - {key: shopnow.io/provider, operator: In, values: [onprem]}
+          - list:
+              elements:
+                - {addon: longhorn, chart: longhorn, repoURL: 'https://charts.longhorn.io', version: '1.13.0', namespace: longhorn-system, wave: '-12', valuesDir: platform/addons/longhorn, extraValues: []}
+                - {addon: metallb, chart: metallb, repoURL: 'https://metallb.github.io/metallb', version: '0.16.2', namespace: metallb-system, wave: '-12', valuesDir: platform/addons/metallb, extraValues: []}
+                - {addon: vault, chart: vault, repoURL: 'https://helm.releases.hashicorp.com', version: '0.34.1', namespace: vault, wave: '-11', valuesDir: platform/addons/vault, extraValues: []}
+                - {addon: ingress-nginx, chart: ingress-nginx, repoURL: 'https://kubernetes.github.io/ingress-nginx', version: '4.15.1', namespace: ingress-nginx, wave: '-7', valuesDir: platform/addons/ingress-nginx, extraValues: []}
+                - {addon: cloudnative-pg, chart: cloudnative-pg, repoURL: 'https://cloudnative-pg.io/charts/', version: '0.29.1', namespace: cnpg-system, wave: '-8', valuesDir: platform/addons/cloudnative-pg, extraValues: []}
+                - {addon: plugin-barman-cloud, chart: plugin-barman-cloud, repoURL: 'https://cloudnative-pg.io/charts/', version: '0.8.1', namespace: cnpg-system, wave: '-7', valuesDir: platform/addons/plugin-barman-cloud, extraValues: []}
+                - {addon: redis-operator, chart: redis-operator, repoURL: 'https://ot-container-kit.github.io/helm-charts', version: '0.27.0', namespace: redis-operator, wave: '-8', valuesDir: platform/addons/redis-operator, extraValues: []}
+                - {addon: minio-operator, chart: operator, repoURL: 'https://operator.min.io', version: '7.1.1', namespace: minio-operator, wave: '-8', valuesDir: platform/addons/minio-operator, extraValues: []}
+                - {addon: minio-tenant, chart: tenant, repoURL: 'https://operator.min.io', version: '7.1.1', namespace: shopnow-data, wave: '-6', valuesDir: platform/addons/minio-tenant, extraValues: []}
+    # --- Chỉ EKS (provider=aws)
+    - matrix:
+        generators:
+          - clusters:
+              selector:
+                matchExpressions:
+                  - {key: shopnow.io/env, operator: Exists}
+                  - {key: shopnow.io/provider, operator: In, values: [aws]}
+          - list:
+              elements:
+                - {addon: aws-load-balancer-controller, chart: aws-load-balancer-controller, repoURL: 'https://aws.github.io/eks-charts', version: '3.6.2', namespace: kube-system, wave: '-9', valuesDir: platform/addons/aws-load-balancer-controller, extraValues: []}
+    # --- Chỉ dev/staging (chaos)
+    - matrix:
+        generators:
+          - clusters:
+              selector:
+                matchExpressions:
+                  - {key: shopnow.io/env, operator: Exists}
+                  - {key: shopnow.io/env, operator: In, values: [dev, staging]}
+          - list:
+              elements:
+                - {addon: chaos-mesh, chart: chaos-mesh, repoURL: 'https://charts.chaos-mesh.org', version: '2.8.8', namespace: chaos-mesh, wave: '-5', valuesDir: platform/addons/chaos-mesh, extraValues: []}
+    # --- Môi trường có OpenSearch (dev dùng Postgres FTS)
+    - matrix:
+        generators:
+          - clusters:
+              selector:
+                matchExpressions:
+                  - {key: shopnow.io/env, operator: Exists}
+                  - {key: shopnow.io/env, operator: In, values: [staging, prod-onprem, prod-aws]}
+          - list:
+              elements:
+                - {addon: opensearch, chart: opensearch, repoURL: 'https://opensearch-project.github.io/helm-charts/', version: '3.9.0', namespace: shopnow-data, wave: '-5', valuesDir: platform/addons/opensearch, extraValues: []}
+  template:
+    metadata:
+      name: '{{ index .metadata.labels "shopnow.io/env" }}-{{ .addon }}'
+      labels:
+        shopnow.io/env: '{{ index .metadata.labels "shopnow.io/env" }}'
+        shopnow.io/addon: '{{ .addon }}'
+      annotations:
+        argocd.argoproj.io/sync-wave: '{{ .wave }}'
+    spec:
+      project: platform
+      destination:
+        name: '{{ .name }}'
+        namespace: '{{ .namespace }}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply=true
+          - RespectIgnoreDifferences=true
+        retry:
+          limit: 10
+          backoff: {duration: 20s, factor: 2, maxDuration: 5m}
+      ignoreDifferences:
+        - group: admissionregistration.k8s.io
+          kind: MutatingWebhookConfiguration
+          jqPathExpressions: ['.webhooks[]?.clientConfig.caBundle']
+        - group: admissionregistration.k8s.io
+          kind: ValidatingWebhookConfiguration
+          jqPathExpressions: ['.webhooks[]?.clientConfig.caBundle', '.webhooks[]?.namespaceSelector']
+        - group: apiextensions.k8s.io
+          kind: CustomResourceDefinition
+          jqPathExpressions: ['.spec.conversion.webhook.clientConfig.caBundle']
+  # sources ở templatePatch để chèn extraValues (danh sách) có điều kiện
+  templatePatch: |
+    spec:
+      sources:
+        - repoURL: '{{ .repoURL }}'
+          chart: '{{ .chart }}'
+          targetRevision: '{{ .version }}'
+          helm:
+            releaseName: '{{ .addon }}'
+            ignoreMissingValueFiles: true
+            valueFiles:
+              - $values/{{ .valuesDir }}/values.yaml
+              - $values/{{ .valuesDir }}/values-{{ index .metadata.labels "shopnow.io/provider" }}.yaml
+              {{- range .extraValues }}
+              - $values/{{ . }}
+              {{- end }}
+              - $values/environments/{{ index .metadata.labels "shopnow.io/env" }}/addons/{{ .addon }}.yaml
+        - repoURL: https://github.com/Luo-Zhii/shop-gitops.git
+          targetRevision: main
+          ref: values

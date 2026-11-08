@@ -1,0 +1,22 @@
+# prod-onprem — DC on-prem (Longhorn, MetalLB, Vault, MinIO). Chạy song song prod-aws (DNS failover/weighted).
+global: {env: prod-onprem, provider: onprem, domain: luo.io.vn}
+image: {registry: registry.luo.io.vn}
+imagePullSecrets: [{name: harbor-pull}]
+logLevel: info
+otel: {samplerRatio: "0.2"}
+autoscaling: {minReplicas: 3}
+priorityClassName: shopnow-critical
+externalSecret:
+  secretStoreRef: {kind: ClusterSecretStore, name: vault}
+ingress:
+  className: nginx
+  tls: {enabled: true, clusterIssuer: letsencrypt-prod}
+pdb: {maxUnavailable: 1}
+dataServices:
+  postgres: {host: shopnow-pg-rw.shopnow-data.svc, port: 5432, sslmode: require, namespace: shopnow-data}
+  redis: {host: shopnow-redis-master.shopnow-data.svc, port: 6379, tls: false, namespace: shopnow-data}
+  kafka: {bootstrap: "shopnow-kafka-kafka-bootstrap.kafka.svc:9092", port: 9092, namespace: kafka}
+  mongo: {host: shopnow-mongo-svc.shopnow-data.svc, port: 27017, options: "replicaSet=shopnow-mongo&authSource=admin", namespace: shopnow-data}
+  opensearch: {url: "https://opensearch-cluster-master.shopnow-data.svc:9200", port: 9200, namespace: shopnow-data}
+  s3: {endpoint: "http://minio.shopnow-data.svc", region: us-east-1, bucket: shopnow-media, publicUrl: "https://media.luo.io.vn/shopnow-media", forcePathStyle: true, staticCredentials: true, port: 9000, namespace: shopnow-data}
+  smtp: {host: smtp-relay.luo.io.vn, port: 587, cidrs: [10.10.0.0/16]}

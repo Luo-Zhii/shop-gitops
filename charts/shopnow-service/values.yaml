@@ -1,0 +1,237 @@
+# Giá trị mặc định của chart. Thứ tự ghi đè khi Argo CD render (xem argocd/apps/shopnow-apps.yaml):
+#   values.yaml → apps/shopnow/values-common.yaml → apps/shopnow/services/<svc>.yaml
+#   → environments/<env>/values.yaml → environments/<env>/services/<svc>.yaml → environments/<env>/images.yaml
+
+# Tên service (bắt buộc), trùng tên trong docs/architecture.md, ví dụ "order".
+name: ""
+# backend | frontend | aiops — chỉ dùng làm nhãn.
+component: backend
+# Cổng HTTP của container (cũng là cổng /metrics).
+port: 8080
+
+global:
+  env: dev            # dev | staging | prod-onprem | prod-aws
+  provider: onprem    # onprem | aws
+  domain: dev.luo.io.vn
+  partOf: shopnow
+
+replicaCount: 1
+
+image:
+  registry: ghcr.io/luo-zhii
+  # Mặc định shopnow/<name>
+  repository: ""
+  tag: ""
+  digest: ""
+  pullPolicy: IfNotPresent
+imagePullSecrets: []
+
+# CI ghi vào environments/<env>/images.yaml: images.<svc>.tag / .digest (ưu tiên hơn image.tag).
+images: {}
+
+serviceAccount:
+  create: true
+  # IRSA: eks.amazonaws.com/role-arn: arn:aws:iam::<acct>:role/shopnow-<svc>
+  # (EKS Pod Identity không cần annotation — gắn qua PodIdentityAssociation phía AWS)
+  annotations: {}
+  automountToken: false
+
+podAnnotations: {}
+podLabels: {}
+
+# Biến môi trường không bí mật → ConfigMap <svc>-env.
+env: {}
+# Biến thô thêm vào container (valueFrom...).
+extraEnv: []
+
+otel:
+  enabled: true
+  endpoint: http://otel-collector.observability.svc:4318
+  # Lấy mẫu trace (parentbased_traceidratio)
+  samplerRatio: "1.0"
+
+logLevel: info
+
+# Endpoint dịch vụ dữ liệu theo môi trường (environments/<env>/values.yaml định nghĩa).
+# namespace → NetworkPolicy dùng namespaceSelector; cidrs → ipBlock (managed service trên AWS).
+dataServices:
+  postgres: {host: "", port: 5432, sslmode: require, namespace: "", cidrs: []}
+  redis: {host: "", port: 6379, tls: false, namespace: "", cidrs: []}
+  kafka: {bootstrap: "", port: 9092, namespace: "", cidrs: []}
+  mongo: {host: "", port: 27017, options: "", namespace: "", cidrs: []}
+  opensearch: {url: "", port: 9200, namespace: "", cidrs: []}
+  s3: {endpoint: "", region: ap-southeast-1, bucket: "", publicUrl: "", forcePathStyle: true, staticCredentials: false, port: 443, namespace: "", cidrs: []}
+  smtp: {host: "", port: 587, namespace: "", cidrs: []}
+
+# Service dùng dịch vụ dữ liệu nào (apps/shopnow/services/<svc>.yaml bật).
+uses:
+  postgres: {enabled: false, database: ""}
+  redis: {enabled: false, db: 0}
+  kafka: {enabled: false}
+  mongo: {enabled: false, database: ""}
+  opensearch: {enabled: false}
+  s3: {enabled: false}
+  smtp: {enabled: false}
+
+# ExternalSecret → Secret <svc>-secrets (envFrom). Không bao giờ để giá trị bí mật trong git.
+# Khoá từ xa: <keyPrefix><name> (vd shopnow/order) và <keyPrefix>shared.
+externalSecret:
+  enabled: true
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: shopnow-secrets
+  refreshInterval: 1h
+  keyPrefix: shopnow/
+  # Khoá riêng của service (thuộc tính trong <prefix><svc>)
+  keys: []
+  # Khoá dùng chung (thuộc tính trong <prefix>shared)
+  sharedKeys: [INTERNAL_TOKEN]
+
+resources:
+  requests: {cpu: 100m, memory: 128Mi}
+  limits: {cpu: 500m, memory: 384Mi}
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 10001
+  runAsGroup: 10001
+  fsGroup: 10001
+  seccompProfile: {type: RuntimeDefault}
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  privileged: false
+  capabilities: {drop: [ALL]}
+
+# emptyDir luôn gắn ở /tmp; thêm thư mục ghi được khác (vd Next.js cache).
+tmpDir: {sizeLimit: 256Mi}
+extraWritableDirs: []   # [{name: next-cache, mountPath: /app/.next/cache, sizeLimit: 512Mi}]
+
+probes:
+  liveness:
+    path: /healthz
+    initialDelaySeconds: 0
+    periodSeconds: 10
+    timeoutSeconds: 2
+    failureThreshold: 3
+  readiness:
+    path: /readyz
+    periodSeconds: 5
+    timeoutSeconds: 2
+    failureThreshold: 3
+  startup:
+    path: /healthz
+    periodSeconds: 5
+    timeoutSeconds: 2
+    failureThreshold: 30     # tối đa 150s để khởi động / migrate
+
+terminationGracePeriodSeconds: 30
+# Chờ endpoint rút khỏi Service trước khi SIGTERM (zero-downtime)
+preStopSleepSeconds: 5
+
+service:
+  type: ClusterIP
+  port: 80
+  annotations: {}
+
+ingress:
+  enabled: false
+  className: nginx
+  # host = <hostPrefix>.<global.domain>
+  hostPrefix: ""
+  path: /
+  annotations: {}
+  tls:
+    enabled: true
+    clusterIssuer: letsencrypt-prod   # rỗng = dùng chứng chỉ sẵn có (ACM trên AWS)
+
+# Argo Rollouts canary (thay cho Deployment khi enabled).
+rollout:
+  enabled: false
+  # none | nginx | alb — định tuyến traffic theo trọng số (cần ingress). none = chia theo số replica.
+  trafficRouting: none
+  steps:
+    - setWeight: 10
+    - pause: {duration: 2m}
+    - setWeight: 30
+    - pause: {duration: 3m}
+    - setWeight: 60
+    - pause: {duration: 3m}
+    - setWeight: 100
+  analysis:
+    enabled: true
+    prometheusAddress: http://kube-prometheus-stack-prometheus.monitoring.svc:9090
+    startingStep: 1
+    interval: 1m
+    failureLimit: 1
+    # Tỉ lệ 5xx tối đa của bản canary
+    maxErrorRate: 0.02
+    # p95 tối đa (giây) của bản canary
+    maxP95Seconds: 1.0
+  abortScaleDownDelaySeconds: 30
+  scaleDownDelaySeconds: 30
+
+autoscaling:
+  enabled: false
+  type: hpa          # hpa | keda
+  minReplicas: 2
+  maxReplicas: 6
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+  keda:
+    pollingInterval: 15
+    cooldownPeriod: 120
+    prometheusAddress: http://kube-prometheus-stack-prometheus.monitoring.svc:9090
+    # requests/giây mỗi pod (0 = không dùng trigger Prometheus)
+    rpsPerPod: 0
+    # [{topic: inventory.command.v1, consumerGroup: inventory, lagThreshold: 50}]
+    kafkaLag: []
+
+pdb:
+  enabled: true
+  maxUnavailable: 1
+
+topologySpread:
+  enabled: true
+  maxSkew: 1
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+priorityClassName: ""
+
+networkPolicy:
+  enabled: true
+  ingress:
+    # Pod api-gateway cùng namespace được gọi vào
+    fromGateway: true
+    # Danh sách service được gọi đồng bộ vào (vd catalog nhận từ order, cart)
+    fromServices: []
+    # Cho mọi pod trong namespace (service gọi service đồng bộ — order → catalog/shipping/promotion)
+    fromSameNamespace: false
+    ingressControllerNamespace: ingress-nginx
+    fromIngressController: false
+    # Trên AWS ALB target-type ip: dải VPC
+    fromCIDRs: []
+    monitoringNamespace: monitoring
+    extra: []
+  egress:
+    dns: true
+    sameNamespace: true
+    otelNamespace: observability
+    # Egress HTTPS ra ngoài (Bedrock, VNPay, Telegram...) — để rỗng là chặn
+    httpsCIDRs: []
+    extra: []
+
+metrics:
+  path: /metrics
+  serviceMonitor:
+    enabled: true
+    interval: 30s
+    labels: {release: kube-prometheus-stack}
+  prometheusRule:
+    enabled: true
+    labels: {release: kube-prometheus-stack}
+    errorRateCritical: 0.05
+    p95WarningSeconds: 1.0
+    restartsWarning: 3

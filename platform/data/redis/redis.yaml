@@ -1,0 +1,64 @@
+# Redis on-prem (OT redis-operator): 1 master + 2 replica, Sentinel tự failover.
+# App dùng Service shopnow-redis-master (operator luôn trỏ vào master hiện tại). prod-aws dùng ElastiCache.
+apiVersion: redis.redis.opstreelabs.in/v1beta2
+kind: RedisReplication
+metadata:
+  name: shopnow-redis
+  namespace: shopnow-data
+  annotations:
+    argocd.argoproj.io/sync-wave: "4"
+spec:
+  clusterSize: 3
+  kubernetesConfig:
+    image: quay.io/opstree/redis:v7.0.15
+    imagePullPolicy: IfNotPresent
+    redisSecret: {name: redis-auth, key: password}
+    resources:
+      requests: {cpu: 100m, memory: 256Mi}
+      limits: {memory: 512Mi}
+  podSecurityContext:
+    runAsUser: 1000
+    fsGroup: 1000
+  storage:
+    volumeClaimTemplate:
+      spec:
+        storageClassName: longhorn
+        accessModes: [ReadWriteOnce]
+        resources:
+          requests: {storage: 5Gi}
+  redisExporter:
+    enabled: true
+    image: quay.io/opstree/redis-exporter:v1.48.0
+---
+apiVersion: redis.redis.opstreelabs.in/v1beta2
+kind: RedisSentinel
+metadata:
+  name: shopnow-redis-sentinel
+  namespace: shopnow-data
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+spec:
+  clusterSize: 3
+  kubernetesConfig:
+    image: quay.io/opstree/redis-sentinel:v7.0.15
+    redisSecret: {name: redis-auth, key: password}
+  redisSentinelConfig:
+    redisReplicationName: shopnow-redis
+    masterGroupName: shopnow
+    quorum: "2"
+    redisReplicationPassword:
+      secretKeyRef: {name: redis-auth, key: password}
+---
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: redis-auth
+  namespace: shopnow-data
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  refreshInterval: 1h
+  secretStoreRef: {kind: ClusterSecretStore, name: vault}
+  target: {name: redis-auth}
+  data:
+    - {secretKey: password, remoteRef: {key: shopnow/shared, property: redis_password}}

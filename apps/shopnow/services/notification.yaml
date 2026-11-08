@@ -1,0 +1,16 @@
+name: notification
+port: 8113
+uses:
+  mongo: {enabled: true, database: notification}
+  kafka: {enabled: true}
+  smtp: {enabled: true}
+externalSecret:
+  keys: [SMTP_USER, SMTP_PASSWORD]
+env:
+  SMTP_FROM: "ShopNow <no-reply@luo.io.vn>"
+autoscaling:
+  type: keda
+  keda:
+    kafkaLag:
+      - {topic: order.v1, consumerGroup: notification, lagThreshold: 200}
+      - {topic: identity.user.v1, consumerGroup: notification, lagThreshold: 50}

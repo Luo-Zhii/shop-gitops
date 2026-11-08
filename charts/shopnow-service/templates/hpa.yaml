@@ -1,0 +1,29 @@
+{{- if and .Values.autoscaling.enabled (eq .Values.autoscaling.type "hpa") -}}
+{{- $as := .Values.autoscaling -}}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "svc.name" . }}
+  labels:
+    {{- include "svc.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: {{ include "svc.workloadApiVersion" . }}
+    kind: {{ include "svc.workloadKind" . }}
+    name: {{ include "svc.name" . }}
+  minReplicas: {{ $as.minReplicas }}
+  maxReplicas: {{ $as.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target: {type: Utilization, averageUtilization: {{ $as.targetCPUUtilizationPercentage }}}
+    - type: Resource
+      resource:
+        name: memory
+        target: {type: Utilization, averageUtilization: {{ $as.targetMemoryUtilizationPercentage }}}
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies: [{type: Percent, value: 50, periodSeconds: 60}]
+{{- end }}

@@ -1,0 +1,10 @@
+# Chỉ cài ở dev/staging (ApplicationSet lọc theo shopnow.io/env)
+controllerManager:
+  replicaCount: 1
+  enableFilterNamespace: true        # chỉ tiêm lỗi vào namespace có annotation chaos-mesh.org/inject=enabled
+chaosDaemon:
+  runtime: containerd
+  socketPath: /run/containerd/containerd.sock
+dashboard:
+  securityMode: true
+dnsServer: {create: false}

@@ -1,0 +1,6 @@
+controller:
+  replicas: 2
+  metrics:
+    enabled: true
+    serviceMonitor: {enabled: true, additionalLabels: {release: kube-prometheus-stack}}
+dashboard: {enabled: false}

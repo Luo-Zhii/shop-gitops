@@ -1,0 +1,5 @@
+name: review
+port: 8112
+uses:
+  mongo: {enabled: true, database: review}
+  kafka: {enabled: true}              # consumer order.completed, producer review.v1

@@ -1,0 +1,30 @@
+# staging (on-prem): HA như prod, có lịch chaos/game-day cho đánh giá AIOps
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../../platform/namespaces
+  - ../../../platform/network/metallb
+  - ../../../platform/network/cert-manager
+  - ../../../platform/secrets/vault
+  - ../../../platform/kyverno/policies
+  - ../../../platform/kafka
+  - ../../../platform/postgres
+  - ../../../platform/data/redis
+  - ../../../platform/data/mongodb
+  - ../../../platform/data/opensearch
+  - ../../../platform/data/onprem-objectstore
+  - ../../../platform/observability
+  - ../../../platform/slo
+  - ../../../platform/chaos/schedules
+configMapGenerator:
+  - name: cluster-info
+    namespace: observability
+    literals: [name=shopnow-staging, env=staging, provider=onprem]
+generatorOptions: {disableNameSuffixHash: true}
+patches:
+  - target: {kind: ClusterSecretStore, name: vault}
+    patch: |-
+      - {op: replace, path: /spec/provider/vault/path, value: kv-staging}
+  - target: {kind: Namespace}
+    patch: |-
+      - {op: add, path: /metadata/annotations/chaos-mesh.org~1inject, value: enabled}

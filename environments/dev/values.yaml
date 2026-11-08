@@ -1,0 +1,36 @@
+# dev — cụm on-prem nhỏ (k3s/kubeadm), dữ liệu chạy trong cụm, 1 replica
+global: {env: dev, provider: onprem, domain: dev.luo.io.vn}
+image: {registry: ghcr.io/luo-zhii, pullPolicy: IfNotPresent}
+replicaCount: 1
+logLevel: debug
+otel: {samplerRatio: "1.0"}
+autoscaling: {minReplicas: 1, maxReplicas: 2}
+topologySpread: {enabled: false}
+externalSecret:
+  secretStoreRef: {kind: ClusterSecretStore, name: vault}
+ingress:
+  className: nginx
+  tls: {enabled: true, clusterIssuer: letsencrypt-staging}
+rollout:
+  # dev: canary rút gọn để vòng lặp nhanh, vẫn có analysis
+  steps:
+    - setWeight: 10
+    - pause: {duration: 30s}
+    - setWeight: 30
+    - pause: {duration: 30s}
+    - setWeight: 60
+    - pause: {duration: 30s}
+    - setWeight: 100
+  analysis: {interval: 30s}
+env:
+  DEV_EXPOSE_OTP: "true"
+  DEV_SIMULATOR: "true"
+dataServices:
+  postgres: {host: shopnow-pg-rw.shopnow-data.svc, port: 5432, sslmode: require, namespace: shopnow-data}
+  redis: {host: shopnow-redis-master.shopnow-data.svc, port: 6379, tls: false, namespace: shopnow-data}
+  kafka: {bootstrap: "shopnow-kafka-kafka-bootstrap.kafka.svc:9092", port: 9092, namespace: kafka}
+  mongo: {host: shopnow-mongo-svc.shopnow-data.svc, port: 27017, options: "replicaSet=shopnow-mongo&authSource=admin", namespace: shopnow-data}
+  opensearch: {url: "https://opensearch-cluster-master.shopnow-data.svc:9200", port: 9200, namespace: shopnow-data}
+  # MinIO tenant: Service cổng 80 → pod 9000 (NetworkPolicy so khớp cổng pod)
+  s3: {endpoint: "http://minio.shopnow-data.svc", region: us-east-1, bucket: shopnow-media, publicUrl: "https://media.dev.luo.io.vn/shopnow-media", forcePathStyle: true, staticCredentials: true, port: 9000, namespace: shopnow-data}
+  smtp: {host: smtp-relay.luo.io.vn, port: 587, cidrs: [10.10.0.0/16]}

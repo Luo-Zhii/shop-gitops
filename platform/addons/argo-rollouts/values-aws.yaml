@@ -1,0 +1,3 @@
+# ALB traffic routing cần quyền đọc TargetGroupBinding (aws-load-balancer-controller)
+controller:
+  extraArgs: [--aws-verify-target-group]

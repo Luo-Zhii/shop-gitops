@@ -1,0 +1,47 @@
+# Grafana sidecar (kube-prometheus-stack) đọc ConfigMap có nhãn grafana_datasource=1
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: shopnow-grafana-datasources
+  namespace: monitoring
+  labels:
+    grafana_datasource: "1"
+data:
+  shopnow-datasources.yaml: |
+    apiVersion: 1
+    datasources:
+      - name: Loki
+        uid: loki
+        type: loki
+        access: proxy
+        url: http://loki-gateway.observability.svc
+        jsonData:
+          derivedFields:
+            - name: trace_id
+              matcherType: label
+              matcherRegex: trace_id
+              datasourceUid: tempo
+              url: "$${__value.raw}"
+      - name: Tempo
+        uid: tempo
+        type: tempo
+        access: proxy
+        url: http://tempo.observability.svc:3200
+        jsonData:
+          serviceMap:
+            datasourceUid: prometheus
+          nodeGraph:
+            enabled: true
+          tracesToLogsV2:
+            datasourceUid: loki
+            spanStartTimeShift: "-5m"
+            spanEndTimeShift: "5m"
+            filterByTraceID: true
+            customQuery: true
+            query: '{service_name="$${__span.tags["service.name"]}"} | json | trace_id="$${__trace.traceId}"'
+          tracesToMetrics:
+            datasourceUid: prometheus
+            tags:
+              - {key: service.name, value: service}
+          lokiSearch:
+            datasourceUid: loki

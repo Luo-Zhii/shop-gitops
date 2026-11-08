@@ -1,0 +1,8 @@
+name: cart
+port: 8107
+uses:
+  redis: {enabled: true, db: 2}
+  kafka: {enabled: true}              # consumer order.v1 (order.created → xoá món)
+networkPolicy:
+  ingress:
+    fromServices: [order]

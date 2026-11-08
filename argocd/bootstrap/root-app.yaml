@@ -1,0 +1,23 @@
+# App-of-apps: áp một lần trên cụm hub (kubectl apply -f argocd/bootstrap/root-app.yaml),
+# sau đó mọi thay đổi trong argocd/apps/ đều đi qua PR.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: shopnow-root
+  namespace: argocd
+  finalizers: [resources-finalizer.argocd.argoproj.io]
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/Luo-Zhii/shop-gitops.git
+    targetRevision: main
+    path: argocd/apps
+    directory: {recurse: true}
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated: {prune: true, selfHeal: true}
+    retry:
+      limit: 5
+      backoff: {duration: 10s, factor: 2, maxDuration: 3m}

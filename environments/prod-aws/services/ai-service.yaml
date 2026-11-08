@@ -1,0 +1,12 @@
+# AWS dùng Bedrock qua IRSA thay cho Ollama on-prem
+env:
+  LLM_PROVIDER: bedrock
+  AWS_REGION: ap-southeast-1
+  BEDROCK_MODEL_ID: REPLACE-ME          # model đã bật trong tài khoản Bedrock
+serviceAccount:
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::111122223333:role/shopnow-prod-ai-bedrock
+networkPolicy:
+  egress:
+    httpsCIDRs: [0.0.0.0/0]
+    extra: []

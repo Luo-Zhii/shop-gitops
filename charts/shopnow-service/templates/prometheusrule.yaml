@@ -1,0 +1,47 @@
+{{- if .Values.metrics.prometheusRule.enabled -}}
+{{- $n := include "svc.name" . -}}
+{{- $p := .Values.metrics.prometheusRule -}}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ $n }}
+  labels:
+    {{- include "svc.labels" . | nindent 4 }}
+    {{- with $p.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  groups:
+    - name: {{ $n }}.rules
+      rules:
+        - record: service:http_requests:rate5m
+          expr: sum by (service, env) (rate(http_server_requests_seconds_count{service="{{ $n }}"}[5m]))
+        - record: service:http_errors:ratio_rate5m
+          expr: |
+            sum by (service, env) (rate(http_server_requests_seconds_count{service="{{ $n }}",status=~"5.."}[5m]))
+            / sum by (service, env) (rate(http_server_requests_seconds_count{service="{{ $n }}"}[5m]))
+        - record: service:http_latency_seconds:p95_5m
+          expr: histogram_quantile(0.95, sum by (service, env, le) (rate(http_server_requests_seconds_bucket{service="{{ $n }}"}[5m])))
+        - alert: ShopNowHighErrorRate
+          expr: service:http_errors:ratio_rate5m{service="{{ $n }}"} > {{ $p.errorRateCritical }}
+          for: 5m
+          labels: {severity: critical, service: {{ $n }}, team: shopnow}
+          annotations:
+            summary: "{{ $n }}: tỉ lệ 5xx vượt {{ mulf $p.errorRateCritical 100 }}%"
+            description: "Tỉ lệ lỗi 5xx {{ `{{ $value | humanizePercentage }}` }} trong 5 phút."
+            runbook_url: https://github.com/Luo-Zhii/shop-gitops/blob/main/README.md#rollback
+        - alert: ShopNowHighLatencyP95
+          expr: service:http_latency_seconds:p95_5m{service="{{ $n }}"} > {{ $p.p95WarningSeconds }}
+          for: 10m
+          labels: {severity: warning, service: {{ $n }}, team: shopnow}
+          annotations:
+            summary: "{{ $n }}: p95 > {{ $p.p95WarningSeconds }}s"
+            description: "p95 hiện tại {{ `{{ $value | humanizeDuration }}` }}."
+        - alert: ShopNowPodRestarting
+          expr: increase(kube_pod_container_status_restarts_total{namespace="{{ .Release.Namespace }}",container="{{ $n }}"}[15m]) > {{ $p.restartsWarning }}
+          for: 0m
+          labels: {severity: warning, service: {{ $n }}, team: shopnow}
+          annotations:
+            summary: "{{ $n }}: pod khởi động lại liên tục"
+            description: "Pod {{ `{{ $labels.pod }}` }} restart {{ `{{ $value }}` }} lần trong 15 phút."
+{{- end }}

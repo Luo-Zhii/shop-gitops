@@ -11,3 +11,6 @@ Thumbs.db
 # Temp
 *.tmp
 *.swp
+
+# Output render cục bộ
+.out/

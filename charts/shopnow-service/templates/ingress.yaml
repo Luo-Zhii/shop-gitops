@@ -1,0 +1,39 @@
+{{- if .Values.ingress.enabled -}}
+{{- $host := include "svc.host" . -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "svc.name" . }}
+  labels:
+    {{- include "svc.labels" . | nindent 4 }}
+  annotations:
+    {{- if and .Values.ingress.tls.enabled .Values.ingress.tls.clusterIssuer }}
+    cert-manager.io/cluster-issuer: {{ .Values.ingress.tls.clusterIssuer }}
+    {{- end }}
+    {{- with .Values.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- if and .Values.ingress.tls.enabled .Values.ingress.tls.clusterIssuer }}
+  tls:
+    - hosts: [{{ $host | quote }}]
+      secretName: {{ include "svc.name" . }}-tls
+  {{- end }}
+  rules:
+    - host: {{ $host | quote }}
+      http:
+        paths:
+          - path: {{ .Values.ingress.path }}
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "svc.name" . }}
+                port:
+                  {{- if and .Values.rollout.enabled (eq .Values.rollout.trafficRouting "alb") }}
+                  # Argo Rollouts ghi action annotation chia trọng số stable/canary
+                  name: use-annotation
+                  {{- else }}
+                  name: http
+                  {{- end }}
+{{- end }}

@@ -1,0 +1,2 @@
+# Plugin backup Barman Cloud (ObjectStore barmancloud.cnpg.io/v1) — cần cert-manager
+replicaCount: 1
