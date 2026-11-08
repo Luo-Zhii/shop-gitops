@@ -101,7 +101,7 @@
           "mode": "multi"
         }
       },
-      "description": "aiops_anomaly_score ∈ [0,1]; ngưỡng cảnh báo mặc định 0.8."
+      "description": "aiops_anomaly_score ∈ [0,1]; ngưỡng cảnh báo mặc định 0.6 (ANOMALY_THRESHOLD của aiops detector, khớp số liệu eval)."
     },
     {
       "id": 23,
