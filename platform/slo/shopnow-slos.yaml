@@ -67,3 +67,24 @@ spec:
           labels: {severity: critical}
         ticketAlert:
           labels: {severity: warning}
+    - name: web-lcp-good
+      objective: 75
+      description: >-
+        Trải nghiệm thật của người dùng (RUM): ≥ 75% lượt tải trang có LCP ≤ 2.5s — đúng ngưỡng "good" p75 của Core
+        Web Vitals. Dữ liệu từ trình duyệt gửi về gateway /api/rum. Cảnh báo được gắn service=web để AIOps lần RCA
+        từ web → api-gateway → backend.
+      sli:
+        events:
+          errorQuery: >-
+            sum(rate(web_vitals_seconds_count{name="LCP"}[{{.window}}]))
+            - sum(rate(web_vitals_seconds_bucket{name="LCP",le="2.5"}[{{.window}}]))
+          totalQuery: sum(rate(web_vitals_seconds_count{name="LCP"}[{{.window}}]))
+      alerting:
+        name: ShopNowWebLcpBurn
+        labels: {service: web, category: user-experience}
+        annotations:
+          summary: "LCP thực tế của người dùng xấu đi — đốt error budget 75%"
+        pageAlert:
+          disable: true                     # trải nghiệm chậm → ticket, không gọi trực đêm
+        ticketAlert:
+          labels: {severity: warning}
