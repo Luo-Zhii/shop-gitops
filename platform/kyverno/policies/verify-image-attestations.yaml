@@ -1,0 +1,53 @@
+# Kiểm attestation chuỗi cung ứng của image ShopNow: SBOM SPDX (cosign attest) + OpenVEX phải có và được ký keyless
+# từ GitHub Actions của repo. Bổ sung cho verify-image-signatures (chữ ký). Chạy Audit trước — chuyển Enforce sau khi
+# PolicyReport sạch trên cụm thật (lộ trình: Audit 2 tuần → Enforce ở staging → prod).
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: verify-image-attestations
+  annotations:
+    policies.kyverno.io/title: Verify ShopNow SBOM & VEX attestations
+    policies.kyverno.io/category: Supply Chain Security
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/subject: Pod
+spec:
+  webhookTimeoutSeconds: 30
+  background: false
+  rules:
+    - name: require-sbom-and-vex
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+              namespaces: [shopnow]
+      verifyImages:
+        - imageReferences:
+            - "ghcr.io/luo-zhii/shopnow/*"
+          failureAction: Audit
+          mutateDigest: false
+          verifyDigest: true
+          required: false
+          attestations:
+            - type: https://spdx.dev/Document
+              attestors:
+                - count: 1
+                  entries:
+                    - keyless:
+                        issuer: https://token.actions.githubusercontent.com
+                        subjectRegExp: '^https://github\.com/Luo-Zhii/shop-microservice/\.github/workflows/[^@]+@refs/(heads/main|tags/v.+)$'
+                        rekor:
+                          url: https://rekor.sigstore.dev
+              conditions:
+                - all:
+                    - key: "{{ length(packages || `[]`) }}"
+                      operator: GreaterThan
+                      value: 0
+            - type: https://openvex.dev/ns
+              attestors:
+                - count: 1
+                  entries:
+                    - keyless:
+                        issuer: https://token.actions.githubusercontent.com
+                        subjectRegExp: '^https://github\.com/Luo-Zhii/shop-microservice/\.github/workflows/[^@]+@refs/(heads/main|tags/v.+)$'
+                        rekor:
+                          url: https://rekor.sigstore.dev
