@@ -1,0 +1,471 @@
+{
+  "uid": "shopnow-platform-ext",
+  "title": "ShopNow — Nền tảng mở rộng (RUM · Tác tử · Kiểm toán)",
+  "description": "Metric thêm 20/11/2026: RUM, agentic RCA qua MCP, kiểm toán sổ cái, accounting/warehouse.",
+  "tags": [
+    "shopnow",
+    "aiops",
+    "rum",
+    "finops"
+  ],
+  "editable": true,
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timezone": "browser",
+  "version": 1,
+  "annotations": {
+    "list": []
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "env",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "query": {
+          "query": "label_values(http_server_requests_seconds_count, env)",
+          "refId": "v"
+        },
+        "definition": "label_values(http_server_requests_seconds_count, env)",
+        "refresh": 2,
+        "multi": false,
+        "includeAll": false,
+        "current": {}
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "row",
+      "title": "Trải nghiệm người dùng thật (RUM)",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 1
+      },
+      "id": 1,
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "LCP p75 theo route",
+      "gridPos": {
+        "x": 0,
+        "y": 1,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "id": 2,
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "histogram_quantile(0.75, sum by (le, route) (rate(web_vitals_seconds_bucket{name=\"LCP\",env=\"$env\"}[5m])))",
+          "legendFormat": "{{route}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "description": "Ngưỡng good ≤ 2.5s (Core Web Vitals p75). SLO web-lcp-good."
+    },
+    {
+      "type": "timeseries",
+      "title": "INP p75",
+      "gridPos": {
+        "x": 12,
+        "y": 1,
+        "w": 6,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "id": 3,
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "histogram_quantile(0.75, sum by (le) (rate(web_vitals_seconds_bucket{name=\"INP\",env=\"$env\"}[5m])))",
+          "legendFormat": "INP"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Lỗi JS/giây",
+      "gridPos": {
+        "x": 18,
+        "y": 1,
+        "w": 6,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "id": 4,
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (kind) (rate(web_errors_total{env=\"$env\"}[5m]))",
+          "legendFormat": "{{kind}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "row",
+      "title": "Tác tử AIOps (agentic RCA)",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 9,
+        "w": 24,
+        "h": 1
+      },
+      "id": 5,
+      "panels": []
+    },
+    {
+      "type": "stat",
+      "title": "Điều tra / 24h",
+      "gridPos": {
+        "x": 0,
+        "y": 10,
+        "w": 4,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "id": 6,
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(increase(aiops_agent_investigations_total{env=\"$env\"}[24h]))",
+          "legendFormat": ""
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Chi phí / lần điều tra (USD)",
+      "gridPos": {
+        "x": 4,
+        "y": 10,
+        "w": 5,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "id": 7,
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(increase(aiops_agent_cost_usd_total{env=\"$env\"}[24h])) / clamp_min(sum(increase(aiops_agent_investigations_total{env=\"$env\"}[24h])), 1)",
+          "legendFormat": ""
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD"
+        },
+        "overrides": []
+      },
+      "description": "Cost per completed task — không phải cost per token."
+    },
+    {
+      "type": "timeseries",
+      "title": "Số lần gọi công cụ (p50/p95)",
+      "gridPos": {
+        "x": 9,
+        "y": 10,
+        "w": 7,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "id": 8,
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "histogram_quantile(0.5, sum by (le) (rate(aiops_agent_tool_calls_bucket{env=\"$env\"}[1h])))",
+          "legendFormat": "p50"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(aiops_agent_tool_calls_bucket{env=\"$env\"}[1h])))",
+          "legendFormat": "p95"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "PR GitOps theo kết quả cổng xác minh",
+      "gridPos": {
+        "x": 16,
+        "y": 10,
+        "w": 8,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "id": 9,
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (verdict) (increase(aiops_gitops_prs_total{env=\"$env\"}[1h]))",
+          "legendFormat": "{{verdict}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Lệnh gọi MCP theo công cụ",
+      "gridPos": {
+        "x": 0,
+        "y": 18,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "id": 10,
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (tool, ok) (rate(aiops_mcp_tool_calls_total{env=\"$env\"}[5m]))",
+          "legendFormat": "{{tool}} ok={{ok}}"
+        }
+      ]
+    },
+    {
+      "type": "bargauge",
+      "title": "Hành động đề xuất (24h)",
+      "gridPos": {
+        "x": 12,
+        "y": 18,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "id": 11,
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (action) (increase(aiops_agent_investigations_total{env=\"$env\"}[24h]))",
+          "legendFormat": "{{action}}"
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Kiểm toán sổ cái & nghiệp vụ",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 26,
+        "w": 24,
+        "h": 1
+      },
+      "id": 12,
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "Phát hiện bất thường sổ cái theo luật",
+      "gridPos": {
+        "x": 0,
+        "y": 27,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "id": 13,
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (rule) (increase(aiops_ledger_findings_total{env=\"$env\"}[1h]))",
+          "legendFormat": "{{rule}}"
+        }
+      ],
+      "description": "Benford, số tròn, ngoài giờ, chi trùng, TK nhạy cảm, tỉ lệ đảo."
+    },
+    {
+      "type": "timeseries",
+      "title": "Sự kiện kế toán/kho tiêu thụ",
+      "gridPos": {
+        "x": 12,
+        "y": 27,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "id": 14,
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (service, topic) (rate(kafka_messages_consumed_total{service=~\"accounting|warehouse\",env=\"$env\"}[5m]))",
+          "legendFormat": "{{service}} {{topic}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "RED: accounting & warehouse — p95",
+      "gridPos": {
+        "x": 0,
+        "y": 35,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "id": 15,
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "histogram_quantile(0.95, sum by (service, le) (rate(http_server_requests_seconds_bucket{service=~\"accounting|warehouse\",env=\"$env\"}[5m])))",
+          "legendFormat": "{{service}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Outbox chưa gửi",
+      "gridPos": {
+        "x": 12,
+        "y": 35,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "id": 16,
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (service) (outbox_pending{service=~\"accounting|warehouse\",env=\"$env\"})",
+          "legendFormat": "{{service}}"
+        }
+      ]
+    }
+  ]
+}

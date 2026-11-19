@@ -1,0 +1,50 @@
+# Cảnh báo cho các phân hệ thêm 20/11/2026. Nhãn service để Alertmanager → AIOps gom đúng sự cố và chạy RCA.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: shopnow-platform-ext
+  namespace: monitoring
+  labels: {release: kube-prometheus-stack}
+spec:
+  groups:
+    - name: shopnow-aiops-agent
+      rules:
+        - alert: AIOpsGitopsPrRejected
+          expr: sum(increase(aiops_gitops_prs_total{verdict=~"rejected|patch_error"}[1h])) > 2
+          labels: {severity: warning, service: aiops}
+          annotations:
+            summary: "Cổng xác minh chặn > 2 PR khắc phục của tác tử trong 1h — rà công cụ/runbook"
+        - alert: AIOpsAgentCostPerTaskHigh
+          expr: >-
+            sum(increase(aiops_agent_cost_usd_total[24h]))
+            / clamp_min(sum(increase(aiops_agent_investigations_total[24h])), 1) > 0.5
+          for: 30m
+          labels: {severity: warning, service: aiops, category: finops}
+          annotations:
+            summary: "Chi phí LLM trung bình mỗi lần điều tra > 0.5 USD (24h)"
+    - name: shopnow-ledger-audit
+      rules:
+        - alert: LedgerDuplicatePayout
+          expr: sum(increase(aiops_ledger_findings_total{rule="duplicate"}[1h])) > 0
+          labels: {severity: critical, service: accounting, category: audit}
+          annotations:
+            summary: "Nghi chi trả seller trùng trong 24h — kiểm tra trước khi chuyển tiền tiếp"
+        - alert: LedgerBenfordNonconformity
+          expr: sum(increase(aiops_ledger_findings_total{rule="benford"}[24h])) > 0
+          labels: {severity: warning, service: accounting, category: audit}
+          annotations:
+            summary: "Phân phối chữ số đầu của số tiền lệch luật Benford — kiểm toán chọn mẫu"
+    - name: shopnow-business-ops
+      rules:
+        - alert: WarehouseOutboxBacklog
+          expr: max by (service) (outbox_pending{service=~"accounting|warehouse"}) > 500
+          for: 10m
+          labels: {severity: warning}
+          annotations:
+            summary: "{{ $labels.service }}: outbox tồn > 500 sự kiện — Kafka/relay có vấn đề"
+        - alert: WebJsErrorsSpike
+          expr: sum(rate(web_errors_total[5m])) > 1
+          for: 10m
+          labels: {severity: warning, service: web, category: user-experience}
+          annotations:
+            summary: "Lỗi JavaScript phía trình duyệt > 1/giây trong 10 phút"

@@ -3,3 +3,4 @@ kind: Kustomization
 resources:
   - grafana
   - alertmanager/secrets.yaml
+  - rules/shopnow-platform-ext.yaml

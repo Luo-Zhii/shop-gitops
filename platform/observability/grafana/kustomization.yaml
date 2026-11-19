@@ -18,3 +18,5 @@ configMapGenerator:
     files: [dashboards/shopnow-kafka-dlq-outbox.json]
   - name: dashboard-shopnow-aiops
     files: [dashboards/shopnow-aiops.json]
+  - name: dashboard-shopnow-platform-ext
+    files: [dashboards/shopnow-platform-ext.json]
