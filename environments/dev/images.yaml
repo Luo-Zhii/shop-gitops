@@ -14,6 +14,8 @@ images:
   order: {tag: "sha-0000000", digest: ""}
   payment: {tag: "sha-0000000", digest: ""}
   shipping: {tag: "sha-0000000", digest: ""}
+  accounting: {tag: "sha-0000000", digest: ""}
+  warehouse: {tag: "sha-0000000", digest: ""}
   review: {tag: "sha-0000000", digest: ""}
   notification: {tag: "sha-0000000", digest: ""}
   ai-service: {tag: "sha-0000000", digest: ""}

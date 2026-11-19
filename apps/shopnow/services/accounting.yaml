@@ -1,0 +1,12 @@
+name: accounting
+port: 8115
+uses:
+  postgres: {enabled: true, database: accounting}
+  kafka: {enabled: true}              # consumer payment.event.v1, order.v1, warehouse.v1 → bút toán
+env:
+  COMMISSION_RATE: "0.05"
+  VAT_RATE: "0.1"
+  INVOICE_SERIES: "1C26TSN"
+networkPolicy:
+  ingress:
+    fromServices: [api-gateway, payment, aiops]   # gateway (admin/seller), payment (/internal/payouts/paid), aiops (kiểm toán)

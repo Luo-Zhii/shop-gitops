@@ -89,6 +89,16 @@ spec:
         login: true
         connectionLimit: 50
         passwordSecret: {name: pg-shipping}
+      - name: accounting
+        ensure: present
+        login: true
+        connectionLimit: 30
+        passwordSecret: {name: pg-accounting}
+      - name: warehouse
+        ensure: present
+        login: true
+        connectionLimit: 30
+        passwordSecret: {name: pg-warehouse}
       - name: ai
         ensure: present
         login: true

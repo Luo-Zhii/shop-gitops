@@ -7,8 +7,8 @@ service:
 uses:
   postgres: {enabled: true, database: aiops}   # lưu incident, MTTD/MTTR
 externalSecret:
-  keys: [AIOPS_WEBHOOK_TOKEN, TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, ANTHROPIC_API_KEY]
-  sharedKeys: []
+  keys: [AIOPS_WEBHOOK_TOKEN, TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, ANTHROPIC_API_KEY, MCP_TOKEN, GITOPS_TOKEN]
+  sharedKeys: [INTERNAL_TOKEN]       # gọi /internal/journal/export của accounting
 env:
   PROMETHEUS_URL: http://kube-prometheus-stack-prometheus.monitoring.svc:9090
   ALERTMANAGER_URL: http://kube-prometheus-stack-alertmanager.monitoring.svc:9093
@@ -17,6 +17,9 @@ env:
   GRAFANA_URL: http://kube-prometheus-stack-grafana.monitoring.svc
   ANOMALY_EVAL_INTERVAL_SECONDS: "60"
   AUTO_REMEDIATION: "false"           # bật theo môi trường (dev/staging)
+  ACCOUNTING_URL: http://accounting     # kiểm toán sổ cái /audit/ledger
+  GITOPS_REPO: Luo-Zhii/shop-gitops     # tác tử mở PR khắc phục (fine-grained token: contents+pull_requests)
+  GITOPS_ENV: dev
 autoscaling:
   enabled: false
 replicaCount: 1

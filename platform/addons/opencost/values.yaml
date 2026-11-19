@@ -1,0 +1,29 @@
+# FinOps: OpenCost phân bổ chi phí theo namespace/workload/nhãn (cost per service, cost per đơn hàng khi chia cho
+# shopnow_orders_total). Đọc metric từ kube-prometheus-stack; giá on-prem đặt tay, AWS lấy giá công khai.
+opencost:
+  exporter:
+    defaultClusterId: shopnow
+    resources:
+      requests: {cpu: 10m, memory: 128Mi}
+      limits: {memory: 512Mi}
+  prometheus:
+    internal:
+      enabled: true
+      serviceName: kube-prometheus-stack-prometheus
+      namespaceName: monitoring
+      port: 9090
+  customPricing:
+    enabled: true
+    provider: custom
+    costModel:
+      description: Giá on-prem quy đổi (khấu hao server + điện) — USD/giờ
+      CPU: "0.012"
+      RAM: "0.0016"
+      storage: "0.00005"
+      GPU: "0"
+  metrics:
+    serviceMonitor:
+      enabled: true
+      additionalLabels: {release: kube-prometheus-stack}
+  ui:
+    enabled: true

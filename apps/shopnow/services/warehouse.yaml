@@ -1,0 +1,11 @@
+name: warehouse
+port: 8116
+uses:
+  postgres: {enabled: true, database: warehouse}
+  kafka: {enabled: true}              # consumer order.v1 → phiếu lấy hàng FIFO
+env:
+  COUNT_APPROVAL_THRESHOLD: "2000000"
+  STORAGE_FEE_PER_UNIT_DAY: "50"
+networkPolicy:
+  ingress:
+    fromServices: [api-gateway]

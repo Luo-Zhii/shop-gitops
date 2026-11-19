@@ -26,6 +26,8 @@ env:
   ORDER_URL: http://order
   PAYMENT_URL: http://payment
   SHIPPING_URL: http://shipping
+  ACCOUNTING_URL: http://accounting
+  WAREHOUSE_URL: http://warehouse
   REVIEW_URL: http://review
   NOTIFICATION_URL: http://notification
   AI_SERVICE_URL: http://ai-service

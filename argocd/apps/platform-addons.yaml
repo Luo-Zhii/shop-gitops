@@ -36,6 +36,7 @@ spec:
                 - {addon: otel-collector, chart: opentelemetry-collector, repoURL: 'https://open-telemetry.github.io/opentelemetry-helm-charts', version: '0.178.2', namespace: observability, wave: '-6', valuesDir: platform/observability/otel-collector, extraValues: []}
                 - {addon: otel-agent, chart: opentelemetry-collector, repoURL: 'https://open-telemetry.github.io/opentelemetry-helm-charts', version: '0.178.2', namespace: observability, wave: '-6', valuesDir: platform/addons/otel-agent, extraValues: []}
                 - {addon: sloth, chart: sloth, repoURL: 'https://slok.github.io/sloth', version: '0.16.0', namespace: monitoring, wave: '-6', valuesDir: platform/addons/sloth, extraValues: []}
+                - {addon: opencost, chart: opencost, repoURL: 'https://opencost.github.io/opencost-helm-chart', version: '2.5.34', namespace: opencost, wave: '-6', valuesDir: platform/addons/opencost, extraValues: []}
     # --- Chỉ on-prem (provider=onprem)
     - matrix:
         generators:

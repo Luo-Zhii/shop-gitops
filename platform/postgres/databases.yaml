@@ -143,6 +143,34 @@ spec:
 apiVersion: postgresql.cnpg.io/v1
 kind: Database
 metadata:
+  name: shopnow-pg-accounting
+  namespace: shopnow-data
+  annotations:
+    argocd.argoproj.io/sync-wave: "6"
+spec:
+  cluster: {name: shopnow-pg}
+  name: accounting
+  owner: accounting
+  ensure: present
+  databaseReclaimPolicy: retain
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
+  name: shopnow-pg-warehouse
+  namespace: shopnow-data
+  annotations:
+    argocd.argoproj.io/sync-wave: "6"
+spec:
+  cluster: {name: shopnow-pg}
+  name: warehouse
+  owner: warehouse
+  ensure: present
+  databaseReclaimPolicy: retain
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Database
+metadata:
   name: shopnow-pg-ai-service
   namespace: shopnow-data
   annotations:
