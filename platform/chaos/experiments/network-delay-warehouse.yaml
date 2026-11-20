@@ -1,0 +1,24 @@
+# Trễ mạng tới warehouse 400ms: phiếu lấy hàng chậm, outbox warehouse.v1 tồn; AIOps phải chỉ ra warehouse
+# (không phải order/gateway) và runbook không rollback khi không có triển khai gần đây.
+apiVersion: chaos-mesh.org/v1alpha1
+kind: NetworkChaos
+metadata:
+  name: network-delay-warehouse
+  namespace: shopnow
+  labels:
+    aiops.shopnow.io/experiment: network-delay-warehouse
+    aiops.shopnow.io/fault-type: latency
+  annotations:
+    aiops.shopnow.io/expected-root-cause: warehouse
+    aiops.shopnow.io/expected-signals: "p95 warehouse tăng, outbox_pending{service=warehouse} tăng, kafka lag order.v1"
+spec:
+  action: delay
+  mode: all
+  selector:
+    namespaces: [shopnow]
+    labelSelectors: {app.kubernetes.io/name: warehouse}
+  delay:
+    latency: 400ms
+    jitter: 80ms
+  direction: to
+  duration: 10m

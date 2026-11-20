@@ -1,0 +1,23 @@
+# HTTPChaos không có tham số xác suất → abort ở 30% pod catalog (fixed-percent) ≈ 30% request. Từ góc nhìn người dùng: kiểm chứng chuỗi RUM → SLO web-lcp-good / lỗi JS
+# → AIOps lần từ web → api-gateway → catalog (đồ thị có cạnh web → api-gateway).
+apiVersion: chaos-mesh.org/v1alpha1
+kind: HTTPChaos
+metadata:
+  name: http-abort-rum
+  namespace: shopnow
+  labels:
+    aiops.shopnow.io/experiment: http-abort-rum
+    aiops.shopnow.io/fault-type: error
+  annotations:
+    aiops.shopnow.io/expected-root-cause: catalog
+    aiops.shopnow.io/expected-signals: "web_errors_total tăng, err catalog tăng, LCP p75 xấu đi"
+spec:
+  mode: fixed-percent
+  value: "30"
+  selector:
+    namespaces: [shopnow]
+    labelSelectors: {app.kubernetes.io/name: catalog}
+  target: Request
+  port: 8104
+  abort: true
+  duration: 10m

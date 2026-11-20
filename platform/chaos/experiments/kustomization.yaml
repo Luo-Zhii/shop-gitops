@@ -10,3 +10,6 @@ resources:
   - cpu-stress-inventory.yaml
   - kafka-network-partition.yaml
   - postgres-latency.yaml
+  - pod-kill-accounting.yaml
+  - network-delay-warehouse.yaml
+  - http-abort-rum.yaml

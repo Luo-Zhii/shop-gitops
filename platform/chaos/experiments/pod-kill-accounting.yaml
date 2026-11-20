@@ -1,0 +1,20 @@
+# Giết pod accounting giữa lúc đang hạch toán: kiểm chứng inbox (processed_events) + khử trùng (source, source_ref)
+# → không bút toán nào bị ghi đôi hay mất sau khi pod khởi động lại; chuỗi hash vẫn liên tục (/admin/integrity ok).
+apiVersion: chaos-mesh.org/v1alpha1
+kind: PodChaos
+metadata:
+  name: pod-kill-accounting
+  namespace: shopnow
+  labels:
+    aiops.shopnow.io/experiment: pod-kill-accounting
+    aiops.shopnow.io/fault-type: pod-kill
+  annotations:
+    aiops.shopnow.io/expected-root-cause: accounting
+    aiops.shopnow.io/expected-signals: "pod restart, consumer lag order.v1/payment.event.v1 tăng rồi về 0; integrity ok"
+spec:
+  action: pod-kill
+  mode: one
+  selector:
+    namespaces: [shopnow]
+    labelSelectors: {app.kubernetes.io/name: accounting}
+  gracePeriod: 0
