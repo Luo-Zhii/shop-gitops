@@ -26,6 +26,7 @@ replicaCount: 1
 networkPolicy:
   ingress:
     fromGateway: false                # Alertmanager (namespace monitoring) đã được mở sẵn
+    fromServices: [api-gateway]       # trang /admin/aiops qua gateway (chỉ admin); CronJob bàn giao ca chạy ở monitoring
   egress:
     httpsCIDRs: [0.0.0.0/0]           # Telegram API, LLM
     extra:

@@ -1,0 +1,35 @@
+# Bản tin bàn giao ca trực: 8:30 sáng giờ VN (01:30 UTC) gọi AIOps đẩy tổng hợp 24h lên kênh trực (Telegram/Slack).
+# Đặt ở namespace monitoring: NetworkPolicy của aiops đã mở cho namespace này (Alertmanager) và dùng chung token webhook.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: oncall-digest
+  namespace: monitoring
+  labels: {app.kubernetes.io/name: oncall-digest, app.kubernetes.io/part-of: shopnow}
+spec:
+  schedule: "30 1 * * *"
+  timeZone: Etc/UTC
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 120
+      template:
+        metadata:
+          labels: {app.kubernetes.io/name: oncall-digest}
+        spec:
+          restartPolicy: Never
+          securityContext: {runAsNonRoot: true, runAsUser: 100, seccompProfile: {type: RuntimeDefault}}
+          containers:
+            - name: send
+              image: curlimages/curl:8.11.1
+              args: ["-fsS", "-X", "POST", "-H", "Authorization: Bearer $(TOKEN)", "http://aiops.shopnow.svc:8120/reports/oncall-digest/send?hours=24"]
+              env:
+                - name: TOKEN
+                  valueFrom: {secretKeyRef: {name: alertmanager-shopnow, key: aiops-webhook-token}}
+              resources:
+                requests: {cpu: 10m, memory: 16Mi}
+                limits: {cpu: 100m, memory: 32Mi}
+              securityContext: {allowPrivilegeEscalation: false, readOnlyRootFilesystem: true, capabilities: {drop: [ALL]}}

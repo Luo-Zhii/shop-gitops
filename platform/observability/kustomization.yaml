@@ -4,3 +4,4 @@ resources:
   - grafana
   - alertmanager/secrets.yaml
   - rules/shopnow-platform-ext.yaml
+  - oncall-digest-cronjob.yaml
