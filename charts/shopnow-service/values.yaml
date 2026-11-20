@@ -168,6 +168,8 @@ rollout:
     maxErrorRate: 0.02
     # p95 tối đa (giây) của bản canary
     maxP95Seconds: 1.0
+    # Cổng AIOps: dừng canary khi điểm bất thường tổng hợp ≥ maxScore quá failureLimit lần
+    aiopsGate: {enabled: true, maxScore: 0.6, failureLimit: 2}
   abortScaleDownDelaySeconds: 30
   scaleDownDelaySeconds: 30
 

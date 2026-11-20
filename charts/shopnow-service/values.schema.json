@@ -70,7 +70,8 @@
           "type": "object",
           "properties": {
             "maxErrorRate": {"type": "number", "minimum": 0, "maximum": 1},
-            "maxP95Seconds": {"type": "number", "exclusiveMinimum": 0}
+            "maxP95Seconds": {"type": "number", "exclusiveMinimum": 0},
+            "aiopsGate": {"type": "object", "additionalProperties": false, "properties": {"enabled": {"type": "boolean"}, "maxScore": {"type": "number", "exclusiveMinimum": 0, "maximum": 1}, "failureLimit": {"type": "integer", "minimum": 0}}}
           }
         }
       }
