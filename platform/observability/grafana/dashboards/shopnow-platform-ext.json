@@ -466,6 +466,116 @@
           "legendFormat": "{{service}}"
         }
       ]
+    },
+    {
+      "type": "row",
+      "title": "FinOps (OpenCost)",
+      "collapsed": false,
+      "gridPos": {
+        "x": 0,
+        "y": 43,
+        "w": 24,
+        "h": 1
+      },
+      "id": 17,
+      "panels": []
+    },
+    {
+      "type": "stat",
+      "title": "Chi phí / đơn hàng (USD)",
+      "gridPos": {
+        "x": 0,
+        "y": 44,
+        "w": 6,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "id": 18,
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD",
+          "decimals": 4
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "shopnow:cost_per_order_usd",
+          "legendFormat": ""
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Chi phí hạ tầng / ngày (USD)",
+      "gridPos": {
+        "x": 6,
+        "y": 44,
+        "w": 6,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "id": 19,
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "shopnow:infra_cost_usd_per_hour * 24",
+          "legendFormat": ""
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Chi phí theo namespace (USD/giờ)",
+      "gridPos": {
+        "x": 12,
+        "y": 44,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "id": 20,
+      "fieldConfig": {
+        "defaults": {
+          "unit": "currencyUSD"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "topk(8, shopnow:namespace_cost_usd_per_hour)",
+          "legendFormat": "{{namespace}}"
+        }
+      ]
     }
   ]
 }

@@ -48,3 +48,26 @@ spec:
           labels: {severity: warning, service: web, category: user-experience}
           annotations:
             summary: "Lỗi JavaScript phía trình duyệt > 1/giây trong 10 phút"
+    # FinOps: chi phí hạ tầng (OpenCost, USD/giờ) quy về đơn vị kinh doanh — chi phí trên mỗi đơn hàng
+    - name: shopnow-finops
+      interval: 5m
+      rules:
+        - record: shopnow:infra_cost_usd_per_hour
+          expr: sum(node_total_hourly_cost)
+        - record: shopnow:namespace_cost_usd_per_hour
+          expr: >-
+            sum by (namespace) (container_cpu_allocation * on (node) group_left() node_cpu_hourly_cost)
+            + sum by (namespace) (container_memory_allocation_bytes / 1073741824 * on (node) group_left() node_ram_hourly_cost)
+        - record: shopnow:orders_per_hour
+          expr: sum(rate(orders_created_total[1h])) * 3600
+        - record: shopnow:cost_per_order_usd
+          expr: shopnow:infra_cost_usd_per_hour / clamp_min(shopnow:orders_per_hour, 1)
+        - alert: CostPerOrderRegression
+          # chi phí/đơn tăng > 50% so với cùng giờ tuần trước (loại trừ khi lượng đơn quá ít)
+          expr: >-
+            shopnow:cost_per_order_usd > 1.5 * (shopnow:cost_per_order_usd offset 1w)
+            and shopnow:orders_per_hour > 20
+          for: 2h
+          labels: {severity: warning, category: finops}
+          annotations:
+            summary: "Chi phí hạ tầng trên mỗi đơn tăng > 50% so với tuần trước — xem namespace nào tăng"
