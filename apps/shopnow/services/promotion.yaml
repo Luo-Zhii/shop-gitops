@@ -6,4 +6,4 @@ uses:
   kafka: {enabled: true}              # consumer order.v1 (nhả voucher khi huỷ)
 networkPolicy:
   ingress:
-    fromServices: [order, cart]       # POST /quote
+    fromServices: [order, cart, aiops]   # POST /quote; aiops đọc lịch flash sale (/internal/flash-sales/window)
