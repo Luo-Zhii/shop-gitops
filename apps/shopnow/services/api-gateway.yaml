@@ -19,6 +19,7 @@ autoscaling:
   maxReplicas: 12
   keda:
     rpsPerPod: 150
+    predictive: true                  # scale trước theo dự báo Holt-Winters của AIOps
 networkPolicy:
   ingress:
     fromGateway: false

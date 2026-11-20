@@ -186,6 +186,8 @@ autoscaling:
     prometheusAddress: http://kube-prometheus-stack-prometheus.monitoring.svc:9090
     # requests/giây mỗi pod (0 = không dùng trigger Prometheus)
     rpsPerPod: 0
+    # true: thêm trigger theo rps DỰ BÁO của AIOps (GET /capacity/forecast cập nhật gauge) — scale trước cao điểm
+    predictive: false
     # [{topic: inventory.command.v1, consumerGroup: inventory, lagThreshold: 50}]
     kafkaLag: []
 

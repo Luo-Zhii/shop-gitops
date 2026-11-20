@@ -14,6 +14,7 @@ autoscaling:
   maxReplicas: 10
   keda:
     rpsPerPod: 100
+    predictive: true                  # scale trước theo dự báo Holt-Winters của AIOps (cao điểm tối / flash sale)
 networkPolicy:
   ingress:
     fromServices: [order, cart, ai-service]   # /internal/skus, gợi ý

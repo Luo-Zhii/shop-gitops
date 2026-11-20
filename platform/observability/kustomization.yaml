@@ -5,3 +5,4 @@ resources:
   - alertmanager/secrets.yaml
   - rules/shopnow-platform-ext.yaml
   - oncall-digest-cronjob.yaml
+  - capacity-forecast-cronjob.yaml

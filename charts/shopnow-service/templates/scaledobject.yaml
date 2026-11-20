@@ -37,6 +37,16 @@ spec:
         query: sum(rate(http_server_requests_seconds_count{service="{{ include "svc.name" . }}"}[1m]))
         threshold: {{ $as.keda.rpsPerPod | quote }}
         ignoreNullValues: "true"
+    {{- if $as.keda.predictive }}
+    # Scale TRƯỚC: đỉnh rps dự báo 1h tới (AIOps Holt-Winters, gauge aiops_forecast_rps) — KEDA lấy max các trigger
+    - type: prometheus
+      name: rps-forecast
+      metadata:
+        serverAddress: {{ $as.keda.prometheusAddress }}
+        query: max(aiops_forecast_rps{service="{{ include "svc.name" . }}"})
+        threshold: {{ $as.keda.rpsPerPod | quote }}
+        ignoreNullValues: "true"
+    {{- end }}
     {{- end }}
     {{- range $as.keda.kafkaLag }}
     - type: kafka
