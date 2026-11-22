@@ -13,7 +13,7 @@ autoscaling:
       - {topic: inventory.command.v1, consumerGroup: inventory, lagThreshold: 50}
 networkPolicy:
   ingress:
-    fromServices: [cart, order]       # GET /stock
+    fromServices: [cart, order, warehouse]   # GET /stock (warehouse: đối soát tồn mỗi 5 phút)
 resources:
   requests: {cpu: 50m, memory: 48Mi}
   limits: {cpu: 500m, memory: 192Mi}

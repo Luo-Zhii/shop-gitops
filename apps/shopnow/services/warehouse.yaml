@@ -6,6 +6,7 @@ uses:
 env:
   COUNT_APPROVAL_THRESHOLD: "2000000"
   STORAGE_FEE_PER_UNIT_DAY: "50"
+  RECONCILE_INTERVAL_SECONDS: "300"   # đối soát tồn với inventory (INVENTORY_URL từ values-common)
 networkPolicy:
   ingress:
     fromServices: [api-gateway]

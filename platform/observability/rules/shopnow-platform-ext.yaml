@@ -129,3 +129,26 @@ spec:
           labels: {severity: warning, category: finops}
           annotations:
             summary: "Chatbot/sinh mô tả đang hạ cấp ({{ $labels.reason }}) — khách vẫn được trả lời theo FAQ"
+    # Data consistency SLO giữa warehouse (hàng thật) và inventory (tồn để bán) — event mất/trùng làm lệch im lặng
+    - name: shopnow-stock-consistency
+      rules:
+        - alert: StockDriftOversellRisk
+          # inventory nhiều hơn hàng thật (lệch bền vững 2 lần đối soát) → bán vượt tồn; nhãn service=inventory để RCA
+          expr: max(warehouse_stock_drift_skus{kind="over"}) > 0
+          for: 10m
+          labels: {severity: critical, service: inventory, category: data-consistency}
+          annotations:
+            summary: "{{ $value }} SKU có tồn bán > hàng thật trong kho — nguy cơ bán vượt tồn"
+            runbook: "Xem /admin/warehouse → Đối soát tồn; kiểm consumer warehouse.stock_changed của inventory; admin bấm Đồng bộ lại"
+        - alert: StockDriftUndersell
+          expr: max(warehouse_stock_drift_skus{kind=~"under|missing"}) > 0
+          for: 30m
+          labels: {severity: warning, service: inventory, category: data-consistency}
+          annotations:
+            summary: "{{ $value }} SKU đang bán hụt so với hàng thật trong kho (mất doanh thu)"
+        - alert: StockReconcileStale
+          expr: time() - max(warehouse_reconcile_last_success_timestamp_seconds) > 1800
+          for: 5m
+          labels: {severity: warning, service: warehouse, category: data-consistency}
+          annotations:
+            summary: "Đối soát tồn warehouse ↔ inventory không chạy thành công > 30 phút — mất khả năng phát hiện lệch"
