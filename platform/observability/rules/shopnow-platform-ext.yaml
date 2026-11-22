@@ -184,3 +184,13 @@ spec:
           labels: {severity: warning, service: accounting, category: business}
           annotations:
             summary: "{{ $value | humanize }} đ COD ĐVVC giữ quá 15 ngày chưa đối soát — rủi ro thất thoát dòng tiền"
+    # Dự báo ngày cạn error budget (AIOps Theil–Sen 24h) — báo TRƯỚC khi hết budget để kịp đóng băng/dồn người sửa
+    - name: shopnow-slo-forecast
+      rules:
+        - alert: SloBudgetExhaustionForecast
+          expr: min by (slo) (aiops_slo_budget_eta_hours) < 48
+          for: 30m
+          labels: {severity: warning, category: reliability}
+          annotations:
+            summary: "SLO {{ $labels.slo }}: theo xu hướng 24h, error budget sẽ cạn sau ~{{ $value | humanize }} giờ"
+            runbook: "Xem /admin/aiops → SLO; cân nhắc đóng băng thay đổi không khẩn cấp và ưu tiên sửa lỗi độ tin cậy"
