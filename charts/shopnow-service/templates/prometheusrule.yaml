@@ -44,4 +44,14 @@ spec:
           annotations:
             summary: "{{ $n }}: pod khởi động lại liên tục"
             description: "Pod {{ `{{ $labels.pod }}` }} restart {{ `{{ $value }}` }} lần trong 15 phút."
+        {{- if .Values.uses.kafka.enabled }}
+        # Service tiêu thụ Kafka: lỗi thật không thành 5xx mà thành sự kiện đẩy vào DLQ (runbook RB-003)
+        - alert: ShopNowKafkaDLQRising
+          expr: sum(rate(kafka_messages_consumed_total{service="{{ $n }}",result="dlq"}[10m])) > 0
+          for: 10m
+          labels: {severity: warning, service: {{ $n }}, team: shopnow}
+          annotations:
+            summary: "{{ $n }}: sự kiện Kafka bị đẩy vào DLQ liên tục 10 phút"
+            description: "{{ `{{ $value | humanize }}` }} sự kiện/giây vào DLQ — dữ liệu giữa các service đang lệch dần."
+        {{- end }}
 {{- end }}
