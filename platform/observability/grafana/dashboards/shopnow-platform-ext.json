@@ -38,6 +38,27 @@
         "multi": false,
         "includeAll": false,
         "current": {}
+      },
+      {
+        "name": "dora_env",
+        "label": "Môi trường (DORA)",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "query": {
+          "query": "label_values(aiops_dora_value, environment)",
+          "refId": "dora_env"
+        },
+        "definition": "label_values(aiops_dora_value, environment)",
+        "current": {
+          "text": "all",
+          "value": "all"
+        },
+        "includeAll": false,
+        "multi": false,
+        "refresh": 2
       }
     ]
   },
@@ -576,6 +597,290 @@
           "legendFormat": "{{namespace}}"
         }
       ]
+    },
+    {
+      "type": "row",
+      "title": "Giao phần mềm (DORA, 30 ngày)",
+      "gridPos": {
+        "x": 0,
+        "y": 52,
+        "w": 24,
+        "h": 1
+      },
+      "collapsed": false,
+      "panels": [],
+      "id": 21
+    },
+    {
+      "type": "stat",
+      "title": "Tần suất deploy (/ngày)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 53,
+        "w": 6,
+        "h": 6
+      },
+      "description": "Màu theo mức DORA: xanh lá elite · xanh dương high · cam medium · đỏ low",
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "aiops_dora_value{metric=\"deployment_frequency\", environment=~\"$dora_env\"}",
+          "legendFormat": "{{environment}}"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "aiops_dora_band{metric=\"deployment_frequency\", environment=~\"$dora_env\"}",
+          "legendFormat": "band",
+          "hide": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "value",
+        "graphMode": "area"
+      },
+      "transformations": [],
+      "id": 22
+    },
+    {
+      "type": "stat",
+      "title": "Lead time",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 6,
+        "y": 53,
+        "w": 6,
+        "h": 6
+      },
+      "description": "Màu theo mức DORA: xanh lá elite · xanh dương high · cam medium · đỏ low",
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "aiops_dora_value{metric=\"lead_time\", environment=~\"$dora_env\"}",
+          "legendFormat": "{{environment}}"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "aiops_dora_band{metric=\"lead_time\", environment=~\"$dora_env\"}",
+          "legendFormat": "band",
+          "hide": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "value",
+        "graphMode": "area"
+      },
+      "transformations": [],
+      "id": 23
+    },
+    {
+      "type": "stat",
+      "title": "Change failure rate",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 53,
+        "w": 6,
+        "h": 6
+      },
+      "description": "Màu theo mức DORA: xanh lá elite · xanh dương high · cam medium · đỏ low",
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "aiops_dora_value{metric=\"change_failure_rate\", environment=~\"$dora_env\"}",
+          "legendFormat": "{{environment}}"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "aiops_dora_band{metric=\"change_failure_rate\", environment=~\"$dora_env\"}",
+          "legendFormat": "band",
+          "hide": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "value",
+        "graphMode": "area"
+      },
+      "transformations": [],
+      "id": 24
+    },
+    {
+      "type": "stat",
+      "title": "Thời gian khôi phục",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 53,
+        "w": 6,
+        "h": 6
+      },
+      "description": "Màu theo mức DORA: xanh lá elite · xanh dương high · cam medium · đỏ low",
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "aiops_dora_value{metric=\"time_to_restore\", environment=~\"$dora_env\"}",
+          "legendFormat": "{{environment}}"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "aiops_dora_band{metric=\"time_to_restore\", environment=~\"$dora_env\"}",
+          "legendFormat": "band",
+          "hide": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "value",
+        "graphMode": "area"
+      },
+      "transformations": [],
+      "id": 25
+    },
+    {
+      "type": "timeseries",
+      "title": "Mức DORA theo thời gian (0 elite → 3 low)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 59,
+        "w": 24,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "aiops_dora_band{environment=~\"$dora_env\"}",
+          "legendFormat": "{{metric}} · {{environment}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "min": 0,
+          "max": 3,
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "blue",
+                "value": 1
+              },
+              {
+                "color": "orange",
+                "value": 2
+              },
+              {
+                "color": "red",
+                "value": 3
+              }
+            ]
+          },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "stepAfter"
+          }
+        },
+        "overrides": []
+      },
+      "id": 26
     }
   ]
 }

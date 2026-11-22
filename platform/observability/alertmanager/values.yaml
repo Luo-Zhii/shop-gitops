@@ -17,6 +17,12 @@ alertmanager:
       routes:
         - receiver: "null"
           matchers: ['alertname =~ "Watchdog|InfoInhibitor"']
+        # 0) Cảnh báo QUY TRÌNH giao phần mềm (DORA) → ticket cho người trực, KHÔNG vào AIOps: không phải sự cố runtime,
+        #    nếu vào sẽ tự tạo "sự cố" và làm bẩn chính MTTR/CFR mà nó đo.
+        - receiver: telegram-warning
+          matchers: ['category = "delivery"']
+          group_by: [alertname, environment]
+          repeat_interval: 24h
         # 1) AIOps nhận MỌI alert critical/warning (cả resolved) để tính MTTD/MTTR và RCA
         - receiver: aiops
           matchers: ['severity =~ "critical|warning"']

@@ -71,3 +71,21 @@ spec:
           labels: {severity: warning, category: finops}
           annotations:
             summary: "Chi phí hạ tầng trên mỗi đơn tăng > 50% so với tuần trước — xem namespace nào tăng"
+    # DORA (aiops_dora_* do AIOps tính từ deploy_records + sự cố): cảnh báo xu hướng quy trình, mức ticket, không page
+    - name: shopnow-dora
+      interval: 5m
+      rules:
+        - alert: DoraChangeFailureRateHigh
+          expr: aiops_dora_value{metric="change_failure_rate", environment=~"prod-.*"} > 0.15
+          for: 6h
+          labels: {severity: warning, category: delivery}
+          annotations:
+            summary: "{{ $labels.environment }}: change failure rate 30 ngày {{ $value | humanizePercentage }} (> 15%, mức low)"
+            description: "Xem tab Thay đổi ở /admin/aiops: deploy nào gây sự cố theo RCA, yếu tố rủi ro nào nổi bật."
+        - alert: DoraBandRegressed
+          # một chỉ số tụt mức so với 7 ngày trước và giữ nguyên 1 ngày (tránh dao động quanh ngưỡng)
+          expr: aiops_dora_band{environment=~"prod-.*"} > (aiops_dora_band{environment=~"prod-.*"} offset 7d)
+          for: 1d
+          labels: {severity: warning, category: delivery}
+          annotations:
+            summary: "{{ $labels.environment }}: DORA {{ $labels.metric }} tụt mức so với tuần trước"
