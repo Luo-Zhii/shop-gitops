@@ -218,6 +218,24 @@
                   "minimum": 0
                 }
               }
+            },
+            "consumer": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "maxDlqRatio": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "window": {
+                  "type": "string",
+                  "pattern": "^[0-9]+[smh]$"
+                }
+              }
             }
           }
         }

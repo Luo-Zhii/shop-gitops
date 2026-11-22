@@ -35,6 +35,21 @@ spec:
           query: |
             histogram_quantile(0.95,
               sum by (le) (rate(http_server_requests_seconds_bucket{ {{- $sel }}}[2m])))
+    {{- with $a.consumer }}{{ if .enabled }}
+    # Service tiêu thụ Kafka: tỉ lệ sự kiện vào DLQ của RIÊNG bản canary (cùng consumer group → nhận phần partition của nó).
+    # Chưa nhận sự kiện nào (topic vắng) → không kết luận được, coi như đạt; lỗi xử lý thật → DLQ tăng → rollback.
+    - name: consumer-dlq-ratio
+      interval: {{ $a.interval }}
+      failureLimit: {{ $a.failureLimit }}
+      successCondition: "len(result) == 0 || isNaN(result[0]) || result[0] <= {{ .maxDlqRatio }}"
+      provider:
+        prometheus:
+          address: {{ $a.prometheusAddress }}
+          query: |
+            sum(rate(kafka_messages_consumed_total{ {{- $sel }},result="dlq"}[{{ .window }}]))
+            /
+            sum(rate(kafka_messages_consumed_total{ {{- $sel }}}[{{ .window }}]))
+    {{- end }}{{ end }}
     {{- with $a.aiopsGate }}{{ if .enabled }}
     # Cổng AIOps: điểm bất thường tổng hợp (IsolationForest + robust z + log Drain3) của service trong lúc canary.
     # Bắt được lỗi đa chiều mà ngưỡng 5xx/p95 bỏ sót (rò bộ nhớ, DLQ tăng, mẫu log lạ). Không có điểm → coi như đạt.

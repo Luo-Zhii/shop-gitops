@@ -10,3 +10,9 @@ env:
 networkPolicy:
   ingress:
     fromServices: [api-gateway, payment, aiops]   # gateway (admin/seller), payment (/internal/payouts/paid), aiops (kiểm toán)
+# Canary cho service tiêu thụ Kafka: theo số replica (không traffic router) — pod canary vào cùng consumer group, nhận
+# ~1/N partition; AnalysisTemplate đo DLQ ratio + 5xx/p95 API + cổng AIOps của riêng bản canary.
+rollout:
+  enabled: true
+  analysis:
+    consumer: {enabled: true, maxDlqRatio: 0.01}
