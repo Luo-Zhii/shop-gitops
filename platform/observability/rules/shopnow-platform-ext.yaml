@@ -152,3 +152,19 @@ spec:
           labels: {severity: warning, service: warehouse, category: data-consistency}
           annotations:
             summary: "Đối soát tồn warehouse ↔ inventory không chạy thành công > 30 phút — mất khả năng phát hiện lệch"
+    # SLA xuất kho theo giờ cắt đơn (warehouse src/sla.ts): trước 14h xuất trong ngày, sau 14h xuất trước 12h hôm sau
+    - name: shopnow-warehouse-sla
+      rules:
+        - alert: WarehousePickSlaBreach
+          expr: max(warehouse_picks_overdue) > 0
+          for: 15m
+          labels: {severity: warning, service: warehouse, category: business}
+          annotations:
+            summary: "{{ $value }} phiếu lấy hàng quá hạn xuất kho — đơn trễ giao, nguy cơ phạt từ sàn/ĐVVC"
+        - alert: WarehousePickBacklogRising
+          # nhiều phiếu sắp quá hạn cùng lúc → báo trước để tăng người ca chiều
+          expr: max(warehouse_picks_due_soon) > 20
+          for: 10m
+          labels: {severity: warning, service: warehouse, category: business}
+          annotations:
+            summary: "{{ $value }} phiếu sẽ quá hạn trong 2 giờ — cân nhắc tăng người đóng gói"
