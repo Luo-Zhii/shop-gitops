@@ -88,3 +88,195 @@ spec:
           disable: true                     # trải nghiệm chậm → ticket, không gọi trực đêm
         ticketAlert:
           labels: {severity: warning}
+    - name: catalog-availability
+      objective: 99.5
+      description: "catalog trả lời không lỗi 5xx (99.5% / 30 ngày) — SLO nền cho mọi service (scorecard Silver)."
+      sli:
+        events:
+          errorQuery: sum(rate(http_server_requests_seconds_count{service="catalog",status=~"5.."}[{{.window}}]))
+          totalQuery: sum(rate(http_server_requests_seconds_count{service="catalog"}[{{.window}}]))
+      alerting:
+        name: ShopNowCatalogAvailabilityBurn
+        labels: {service: catalog, category: availability}
+        annotations:
+          summary: "catalog đang đốt error budget availability 99.5%"
+        pageAlert:
+          labels: {severity: critical}
+        ticketAlert:
+          labels: {severity: warning}
+    - name: search-availability
+      objective: 99.5
+      description: "search trả lời không lỗi 5xx (99.5% / 30 ngày) — SLO nền cho mọi service (scorecard Silver)."
+      sli:
+        events:
+          errorQuery: sum(rate(http_server_requests_seconds_count{service="search",status=~"5.."}[{{.window}}]))
+          totalQuery: sum(rate(http_server_requests_seconds_count{service="search"}[{{.window}}]))
+      alerting:
+        name: ShopNowSearchAvailabilityBurn
+        labels: {service: search, category: availability}
+        annotations:
+          summary: "search đang đốt error budget availability 99.5%"
+        pageAlert:
+          labels: {severity: critical}
+        ticketAlert:
+          labels: {severity: warning}
+    - name: identity-availability
+      objective: 99.5
+      description: "identity trả lời không lỗi 5xx (99.5% / 30 ngày) — SLO nền cho mọi service (scorecard Silver)."
+      sli:
+        events:
+          errorQuery: sum(rate(http_server_requests_seconds_count{service="identity",status=~"5.."}[{{.window}}]))
+          totalQuery: sum(rate(http_server_requests_seconds_count{service="identity"}[{{.window}}]))
+      alerting:
+        name: ShopNowIdentityAvailabilityBurn
+        labels: {service: identity, category: availability}
+        annotations:
+          summary: "identity đang đốt error budget availability 99.5%"
+        pageAlert:
+          labels: {severity: critical}
+        ticketAlert:
+          labels: {severity: warning}
+    - name: accounting-availability
+      objective: 99.5
+      description: "accounting trả lời không lỗi 5xx (99.5% / 30 ngày) — SLO nền cho mọi service (scorecard Silver)."
+      sli:
+        events:
+          errorQuery: sum(rate(http_server_requests_seconds_count{service="accounting",status=~"5.."}[{{.window}}]))
+          totalQuery: sum(rate(http_server_requests_seconds_count{service="accounting"}[{{.window}}]))
+      alerting:
+        name: ShopNowAccountingAvailabilityBurn
+        labels: {service: accounting, category: availability}
+        annotations:
+          summary: "accounting đang đốt error budget availability 99.5%"
+        pageAlert:
+          labels: {severity: critical}
+        ticketAlert:
+          labels: {severity: warning}
+    - name: warehouse-availability
+      objective: 99.5
+      description: "warehouse trả lời không lỗi 5xx (99.5% / 30 ngày) — SLO nền cho mọi service (scorecard Silver)."
+      sli:
+        events:
+          errorQuery: sum(rate(http_server_requests_seconds_count{service="warehouse",status=~"5.."}[{{.window}}]))
+          totalQuery: sum(rate(http_server_requests_seconds_count{service="warehouse"}[{{.window}}]))
+      alerting:
+        name: ShopNowWarehouseAvailabilityBurn
+        labels: {service: warehouse, category: availability}
+        annotations:
+          summary: "warehouse đang đốt error budget availability 99.5%"
+        pageAlert:
+          labels: {severity: critical}
+        ticketAlert:
+          labels: {severity: warning}
+    - name: promotion-availability
+      objective: 99.5
+      description: "promotion trả lời không lỗi 5xx (99.5% / 30 ngày) — SLO nền cho mọi service (scorecard Silver)."
+      sli:
+        events:
+          errorQuery: sum(rate(http_server_requests_seconds_count{service="promotion",status=~"5.."}[{{.window}}]))
+          totalQuery: sum(rate(http_server_requests_seconds_count{service="promotion"}[{{.window}}]))
+      alerting:
+        name: ShopNowPromotionAvailabilityBurn
+        labels: {service: promotion, category: availability}
+        annotations:
+          summary: "promotion đang đốt error budget availability 99.5%"
+        pageAlert:
+          labels: {severity: critical}
+        ticketAlert:
+          labels: {severity: warning}
+    - name: review-availability
+      objective: 99.5
+      description: "review trả lời không lỗi 5xx (99.5% / 30 ngày) — SLO nền cho mọi service (scorecard Silver)."
+      sli:
+        events:
+          errorQuery: sum(rate(http_server_requests_seconds_count{service="review",status=~"5.."}[{{.window}}]))
+          totalQuery: sum(rate(http_server_requests_seconds_count{service="review"}[{{.window}}]))
+      alerting:
+        name: ShopNowReviewAvailabilityBurn
+        labels: {service: review, category: availability}
+        annotations:
+          summary: "review đang đốt error budget availability 99.5%"
+        pageAlert:
+          labels: {severity: critical}
+        ticketAlert:
+          labels: {severity: warning}
+    - name: seller-availability
+      objective: 99.5
+      description: "seller trả lời không lỗi 5xx (99.5% / 30 ngày) — SLO nền cho mọi service (scorecard Silver)."
+      sli:
+        events:
+          errorQuery: sum(rate(http_server_requests_seconds_count{service="seller",status=~"5.."}[{{.window}}]))
+          totalQuery: sum(rate(http_server_requests_seconds_count{service="seller"}[{{.window}}]))
+      alerting:
+        name: ShopNowSellerAvailabilityBurn
+        labels: {service: seller, category: availability}
+        annotations:
+          summary: "seller đang đốt error budget availability 99.5%"
+        pageAlert:
+          labels: {severity: critical}
+        ticketAlert:
+          labels: {severity: warning}
+    - name: shipping-availability
+      objective: 99.5
+      description: "shipping trả lời không lỗi 5xx (99.5% / 30 ngày) — SLO nền cho mọi service (scorecard Silver)."
+      sli:
+        events:
+          errorQuery: sum(rate(http_server_requests_seconds_count{service="shipping",status=~"5.."}[{{.window}}]))
+          totalQuery: sum(rate(http_server_requests_seconds_count{service="shipping"}[{{.window}}]))
+      alerting:
+        name: ShopNowShippingAvailabilityBurn
+        labels: {service: shipping, category: availability}
+        annotations:
+          summary: "shipping đang đốt error budget availability 99.5%"
+        pageAlert:
+          labels: {severity: critical}
+        ticketAlert:
+          labels: {severity: warning}
+    - name: user-profile-availability
+      objective: 99.5
+      description: "user-profile trả lời không lỗi 5xx (99.5% / 30 ngày) — SLO nền cho mọi service (scorecard Silver)."
+      sli:
+        events:
+          errorQuery: sum(rate(http_server_requests_seconds_count{service="user-profile",status=~"5.."}[{{.window}}]))
+          totalQuery: sum(rate(http_server_requests_seconds_count{service="user-profile"}[{{.window}}]))
+      alerting:
+        name: ShopNowUserProfileAvailabilityBurn
+        labels: {service: user-profile, category: availability}
+        annotations:
+          summary: "user-profile đang đốt error budget availability 99.5%"
+        pageAlert:
+          labels: {severity: critical}
+        ticketAlert:
+          labels: {severity: warning}
+    - name: notification-availability
+      objective: 99.5
+      description: "notification trả lời không lỗi 5xx (99.5% / 30 ngày) — SLO nền cho mọi service (scorecard Silver)."
+      sli:
+        events:
+          errorQuery: sum(rate(http_server_requests_seconds_count{service="notification",status=~"5.."}[{{.window}}]))
+          totalQuery: sum(rate(http_server_requests_seconds_count{service="notification"}[{{.window}}]))
+      alerting:
+        name: ShopNowNotificationAvailabilityBurn
+        labels: {service: notification, category: availability}
+        annotations:
+          summary: "notification đang đốt error budget availability 99.5%"
+        pageAlert:
+          labels: {severity: critical}
+        ticketAlert:
+          labels: {severity: warning}
+    - name: ai-service-availability
+      objective: 99.5
+      description: "ai-service trả lời không lỗi 5xx (99.5% / 30 ngày) — SLO nền cho mọi service (scorecard Silver)."
+      sli:
+        events:
+          errorQuery: sum(rate(http_server_requests_seconds_count{service="ai-service",status=~"5.."}[{{.window}}]))
+          totalQuery: sum(rate(http_server_requests_seconds_count{service="ai-service"}[{{.window}}]))
+      alerting:
+        name: ShopNowAiServiceAvailabilityBurn
+        labels: {service: ai-service, category: availability}
+        annotations:
+          summary: "ai-service đang đốt error budget availability 99.5%"
+        pageAlert:
+          labels: {severity: critical}
+        ticketAlert:
+          labels: {severity: warning}
