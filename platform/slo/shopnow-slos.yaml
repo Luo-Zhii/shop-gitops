@@ -67,6 +67,24 @@ spec:
           labels: {severity: critical}
         ticketAlert:
           labels: {severity: warning}
+    - name: synthetic-journey
+      objective: 99.5
+      description: >-
+        Hành trình mua hàng tổng hợp (home → search → product → giỏ khách) do robot chạy mỗi phút ở từng cụm. Bắt lỗi
+        cả khi không có khách (ban đêm, ngay sau deploy) — điều mà SLO dựa trên traffic thật không làm được.
+      sli:
+        events:
+          errorQuery: sum(rate(synthetic_journey_runs_total{result="failure"}[{{.window}}]))
+          totalQuery: sum(rate(synthetic_journey_runs_total[{{.window}}]))
+      alerting:
+        name: ShopNowSyntheticJourneyBurn
+        labels: {service: api-gateway, category: user-experience}
+        annotations:
+          summary: "Hành trình mua hàng tổng hợp thất bại — đốt error budget 99.5%"
+        pageAlert:
+          labels: {severity: critical}
+        ticketAlert:
+          labels: {severity: warning}
     - name: web-lcp-good
       objective: 75
       description: >-

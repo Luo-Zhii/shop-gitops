@@ -16,6 +16,7 @@ images:
   shipping: {tag: "v2.0.0", digest: ""}
   accounting: {tag: "v2.0.0", digest: ""}
   warehouse: {tag: "v2.0.0", digest: ""}
+  synthetic: {tag: "v2.0.0", digest: ""}
   review: {tag: "v2.0.0", digest: ""}
   notification: {tag: "v2.0.0", digest: ""}
   ai-service: {tag: "v2.0.0", digest: ""}

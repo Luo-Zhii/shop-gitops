@@ -89,3 +89,26 @@ spec:
           labels: {severity: warning, category: delivery}
           annotations:
             summary: "{{ $labels.environment }}: DORA {{ $labels.metric }} tụt mức so với tuần trước"
+    # Giám sát tổng hợp: bước hỏng mang nhãn service của bước → Alertmanager → AIOps mở sự cố đúng service, RCA từ đó
+    - name: shopnow-synthetic
+      rules:
+        - alert: SyntheticStepFailing
+          # hỏng 3 lần chạy liên tiếp (robot chạy mỗi phút) — tránh báo vì một request lẻ
+          expr: max_over_time(synthetic_step_success[3m]) == 0
+          labels: {severity: warning, category: user-experience}
+          annotations:
+            summary: "{{ $labels.location }}: bước {{ $labels.step }} của hành trình mua hàng tổng hợp hỏng 3 phút ({{ $labels.service }})"
+        - alert: SyntheticLocationDivergence
+          # một vị trí hỏng trong khi vị trí kia vẫn đi trót lọt → nghi mạng/ingress/cụm, không phải lỗi ứng dụng
+          expr: >-
+            (count by (journey) (synthetic_journey_success == 0) > 0)
+            and on (journey) (count by (journey) (synthetic_journey_success == 1) > 0)
+          for: 5m
+          labels: {severity: warning, service: api-gateway, category: hybrid-network}
+          annotations:
+            summary: "Hành trình tổng hợp hỏng ở một cụm nhưng cụm kia vẫn chạy — kiểm tra mạng/ingress hybrid"
+        - alert: SyntheticProbeStale
+          expr: time() - max by (location) (synthetic_last_run_timestamp_seconds) > 300
+          labels: {severity: warning, service: synthetic}
+          annotations:
+            summary: "{{ $labels.location }}: robot giám sát tổng hợp không chạy > 5 phút — mất khả năng phát hiện lỗi ngoài giờ"

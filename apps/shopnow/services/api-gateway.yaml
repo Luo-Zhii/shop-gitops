@@ -9,7 +9,7 @@ ingress:
 uses:
   redis: {enabled: true, db: 0}       # rate limit
 externalSecret:
-  sharedKeys: [INTERNAL_TOKEN]
+  sharedKeys: [INTERNAL_TOKEN, SYNTHETIC_TOKEN]   # SYNTHETIC_TOKEN: robot giám sát tổng hợp → gắn x-synthetic
 rollout:
   enabled: true
   trafficRouting: nginx               # prod-aws ghi đè thành alb
@@ -24,7 +24,7 @@ networkPolicy:
   ingress:
     fromGateway: false
     fromIngressController: true
-    fromServices: [web]               # Next.js SSR gọi BFF
+    fromServices: [web, synthetic]    # Next.js SSR gọi BFF; robot giám sát tổng hợp
 resources:
   requests: {cpu: 200m, memory: 192Mi}
   limits: {cpu: "1", memory: 512Mi}

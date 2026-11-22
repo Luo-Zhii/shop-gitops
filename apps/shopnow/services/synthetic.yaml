@@ -1,0 +1,20 @@
+# Robot giám sát tổng hợp: đi hành trình home → search → product → giỏ khách (KHÔNG checkout) mỗi phút qua gateway.
+# Chạy ở MỌI cụm (on-prem + AWS) → nhãn location = global.provider: cùng hành trình từ hai nơi tách lỗi mạng/cụm khỏi lỗi app.
+name: synthetic
+port: 8117
+replicaCount: 1                       # một robot/cụm là đủ; nhiều replica = nhân đôi tải giả
+autoscaling:
+  enabled: false                      # ngoại lệ có chủ đích của scorecard (luật autoscaling): robot phải đúng 1 bản
+env:
+  GATEWAY_URL: http://api-gateway
+  INTERVAL_SECONDS: "60"
+  STEP_TIMEOUT_MS: "5000"
+  SEARCH_QUERY: "áo"
+externalSecret:
+  sharedKeys: [INTERNAL_TOKEN, SYNTHETIC_TOKEN]
+networkPolicy:
+  ingress:
+    fromGateway: false                # không mở ra ngoài; Prometheus scrape /metrics theo luật chung của chart
+resources:
+  requests: {cpu: 20m, memory: 64Mi}
+  limits: {cpu: 200m, memory: 128Mi}

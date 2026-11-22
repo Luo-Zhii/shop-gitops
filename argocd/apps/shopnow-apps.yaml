@@ -44,6 +44,7 @@ spec:
                 - {service: order, wave: "3"}
                 - {service: api-gateway, wave: "4"}
                 - {service: web, wave: "5"}
+                - {service: synthetic, wave: "6"}   # sau gateway/web: robot đi hành trình khi mọi thứ đã lên
   template:
     metadata:
       name: '{{ index .metadata.labels "shopnow.io/env" }}-{{ .service }}'
