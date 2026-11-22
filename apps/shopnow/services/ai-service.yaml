@@ -10,6 +10,10 @@ env:
   LLM_PROVIDER: ollama                # prod-aws ghi đè: bedrock
   OLLAMA_URL: http://ollama.ai.svc:11434
   UVICORN_WORKERS: "2"
+  # FinOps cho GenAI: Ollama tự host → giá theo token = 0 (chi phí là GPU, đã tính ở OpenCost); prod-aws (Bedrock) ghi đè
+  LLM_PRICE_INPUT_PER_MTOK: "0"
+  LLM_PRICE_OUTPUT_PER_MTOK: "0"
+  LLM_DAILY_BUDGET_USD: "0"           # 0 = không giới hạn
 podSecurityContext:
   runAsUser: 10001
 networkPolicy:

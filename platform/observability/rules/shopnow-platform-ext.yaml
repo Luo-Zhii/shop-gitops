@@ -112,3 +112,20 @@ spec:
           labels: {severity: warning, service: synthetic}
           annotations:
             summary: "{{ $labels.location }}: robot giám sát tổng hợp không chạy > 5 phút — mất khả năng phát hiện lỗi ngoài giờ"
+    # FinOps cho GenAI (ai-service llm/budget.py): ngân sách LLM ngày; hết ngân sách → chat/mô tả tự về FAQ/template
+    - name: shopnow-llm-finops
+      rules:
+        - record: shopnow:llm_cost_usd_per_hour
+          expr: sum by (provider, feature) (rate(ai_llm_cost_usd_total[1h])) * 3600
+        - alert: LlmBudgetLow
+          expr: min(ai_llm_budget_remaining_ratio) < 0.2
+          for: 10m
+          labels: {severity: warning, category: finops}
+          annotations:
+            summary: "Ngân sách LLM ngày còn {{ $value | humanizePercentage }} — sắp hạ cấp chatbot về FAQ"
+        - alert: LlmDegraded
+          expr: max by (reason) (ai_llm_degraded) == 1
+          for: 5m
+          labels: {severity: warning, category: finops}
+          annotations:
+            summary: "Chatbot/sinh mô tả đang hạ cấp ({{ $labels.reason }}) — khách vẫn được trả lời theo FAQ"

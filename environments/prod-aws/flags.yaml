@@ -4,3 +4,4 @@
 featureFlags:
   recommendations: {state: ENABLED, variants: {"on": true, "off": false}, defaultVariant: "on"}   # gateway → ai-service
   search-suggest: {state: ENABLED, variants: {"on": true, "off": false}, defaultVariant: "on"}    # search /suggest
+  llm-assistant: {state: ENABLED, variants: {"on": true, "off": false}, defaultVariant: "on"}     # ai-service: chat/mô tả dùng LLM

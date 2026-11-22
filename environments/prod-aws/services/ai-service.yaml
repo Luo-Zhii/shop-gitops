@@ -3,6 +3,10 @@ env:
   LLM_PROVIDER: bedrock
   AWS_REGION: ap-southeast-1
   BEDROCK_MODEL_ID: REPLACE-ME          # model đã bật trong tài khoản Bedrock
+  # Bedrock tính tiền theo token → bảng giá + ngân sách ngày (USD); hết ngân sách chatbot tự về FAQ (llm/budget.py)
+  LLM_PRICE_INPUT_PER_MTOK: "3"
+  LLM_PRICE_OUTPUT_PER_MTOK: "15"
+  LLM_DAILY_BUDGET_USD: "50"
 serviceAccount:
   annotations:
     eks.amazonaws.com/role-arn: arn:aws:iam::111122223333:role/shopnow-prod-ai-bedrock
