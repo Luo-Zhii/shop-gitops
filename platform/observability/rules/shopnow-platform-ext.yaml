@@ -168,3 +168,19 @@ spec:
           labels: {severity: warning, service: warehouse, category: business}
           annotations:
             summary: "{{ $value }} phiếu sẽ quá hạn trong 2 giờ — cân nhắc tăng người đóng gói"
+    # Sức khoẻ tài chính (accounting src/health.ts): tiền khách đã trả nhưng đơn không hoàn tất/hoàn tiền
+    - name: shopnow-finance-health
+      rules:
+        - alert: EscrowFundsStale
+          expr: max(accounting_escrow_stale_checkouts) > 0
+          for: 30m
+          labels: {severity: warning, service: accounting, category: business}
+          annotations:
+            summary: "{{ $value }} checkout có tiền thu hộ treo > 15 ngày — saga đơn kẹt, phải hoàn tất hoặc hoàn tiền"
+            runbook: "Xem /admin/accounting → Khoá sổ (checklist escrow_stale); đối chiếu trạng thái đơn ở order service"
+        - alert: CodUnreconciled
+          expr: max(accounting_cod_open_vnd) > 50000000
+          for: 1h
+          labels: {severity: warning, service: accounting, category: business}
+          annotations:
+            summary: "{{ $value | humanize }} đ COD ĐVVC giữ quá 15 ngày chưa đối soát — rủi ro thất thoát dòng tiền"
