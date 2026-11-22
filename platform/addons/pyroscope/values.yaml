@@ -1,0 +1,15 @@
+# Grafana Pyroscope (continuous profiling) — "trụ cột thứ tư" của observability.
+# Chế độ single-binary (đủ cho đồ án/cụm nhỏ); AIOps gọi Connect API SelectMergeStacktraces qua công cụ MCP `cpu_profile`.
+pyroscope:
+  replicaCount: 1
+  persistence:
+    enabled: true
+    size: 10Gi
+  resources:
+    requests: {cpu: 100m, memory: 256Mi}
+    limits: {cpu: "1", memory: 1Gi}
+  extraArgs:
+    store-gateway.sharding-ring.replication-factor: "1"
+# Thu profile do Alloy (addon alloy-profiling) đẩy vào; không bật agent đi kèm của chart
+alloy:
+  enabled: false

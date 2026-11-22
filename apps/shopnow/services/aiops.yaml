@@ -14,6 +14,7 @@ env:
   ALERTMANAGER_URL: http://kube-prometheus-stack-alertmanager.monitoring.svc:9093
   LOKI_URL: http://loki-gateway.observability.svc
   TEMPO_URL: http://tempo.observability.svc:3200
+  PYROSCOPE_URL: http://pyroscope.observability.svc:4040   # công cụ MCP cpu_profile (continuous profiling)
   GRAFANA_URL: http://kube-prometheus-stack-grafana.monitoring.svc
   ANOMALY_EVAL_INTERVAL_SECONDS: "60"
   AUTO_REMEDIATION: "false"           # bật theo môi trường (dev/staging)
@@ -35,7 +36,7 @@ networkPolicy:
         ports: [{port: 9090, protocol: TCP}, {port: 9093, protocol: TCP}, {port: 80, protocol: TCP}, {port: 3000, protocol: TCP}]
       - to:
           - namespaceSelector: {matchLabels: {kubernetes.io/metadata.name: observability}}
-        ports: [{port: 80, protocol: TCP}, {port: 3100, protocol: TCP}, {port: 3200, protocol: TCP}]
+        ports: [{port: 80, protocol: TCP}, {port: 3100, protocol: TCP}, {port: 3200, protocol: TCP}, {port: 4040, protocol: TCP}]
 resources:
   requests: {cpu: 200m, memory: 512Mi}
   limits: {cpu: "2", memory: 1536Mi}

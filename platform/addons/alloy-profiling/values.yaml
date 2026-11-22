@@ -1,0 +1,55 @@
+# Grafana Alloy chạy profiler eBPF (`pyroscope.ebpf`) trên mỗi node: lấy stack CPU của pod namespace shopnow
+# KHÔNG cần sửa code/thêm SDK vào service (Node, Go, Python đều được) → đẩy về Pyroscope.
+# eBPF cần đặc quyền (privileged + hostPID) — vì vậy đặt ở namespace observability, ngoài phạm vi Kyverno/PSA restricted của shopnow.
+controller:
+  type: daemonset
+  hostPID: true
+alloy:
+  securityContext:
+    privileged: true
+    runAsUser: 0
+  resources:
+    requests: {cpu: 50m, memory: 128Mi}
+    limits: {cpu: 500m, memory: 512Mi}
+  configMap:
+    content: |
+      // pod của node hiện tại thuộc namespace shopnow
+      discovery.kubernetes "pods" {
+        role = "pod"
+        selectors {
+          role  = "pod"
+          field = "spec.nodeName=" + sys.env("HOSTNAME")
+        }
+      }
+      discovery.relabel "shopnow" {
+        targets = discovery.kubernetes.pods.targets
+        rule {
+          source_labels = ["__meta_kubernetes_namespace"]
+          regex         = "shopnow"
+          action        = "keep"
+        }
+        // nhãn service_name = app.kubernetes.io/name → AIOps lọc {service_name="<svc>"}
+        rule {
+          source_labels = ["__meta_kubernetes_pod_label_app_kubernetes_io_name"]
+          target_label  = "service_name"
+        }
+        rule {
+          source_labels = ["__meta_kubernetes_namespace"]
+          target_label  = "namespace"
+        }
+        rule {
+          source_labels = ["__meta_kubernetes_pod_container_id"]
+          regex         = "^(\\w+):\\/\\/(.+)$"
+          replacement   = "$2"
+          target_label  = "__container_id__"
+        }
+      }
+      pyroscope.ebpf "shopnow" {
+        targets    = discovery.relabel.shopnow.output
+        forward_to = [pyroscope.write.default.receiver]
+      }
+      pyroscope.write "default" {
+        endpoint {
+          url = "http://pyroscope.observability.svc:4040"
+        }
+      }
