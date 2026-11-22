@@ -1,0 +1,12 @@
+{{- if .Values.featureFlags }}
+# Feature flag (flagd JSON) — không gắn checksum vào pod: đổi flag KHÔNG được làm rolling restart, kubelet tự cập nhật file.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "svc.name" . }}-flags
+  labels:
+    {{- include "svc.labels" . | nindent 4 }}
+    shopnow.io/feature-flags: "true"
+data:
+  flags.json: {{ dict "flags" .Values.featureFlags | toJson | quote }}
+{{- end }}

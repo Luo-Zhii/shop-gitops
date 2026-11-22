@@ -2,30 +2,98 @@
   "$schema": "https://json-schema.org/draft-07/schema#",
   "title": "shopnow-service values",
   "type": "object",
-  "required": ["name", "port", "image", "global", "rollout", "autoscaling", "resources"],
+  "required": [
+    "name",
+    "port",
+    "image",
+    "global",
+    "rollout",
+    "autoscaling",
+    "resources"
+  ],
   "properties": {
-    "name": {"type": "string", "pattern": "^[a-z][a-z0-9-]{1,40}$"},
-    "component": {"type": "string", "enum": ["backend", "frontend", "aiops"]},
-    "port": {"type": "integer", "minimum": 1024, "maximum": 65535},
-    "replicaCount": {"type": "integer", "minimum": 0},
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]{1,40}$"
+    },
+    "component": {
+      "type": "string",
+      "enum": [
+        "backend",
+        "frontend",
+        "aiops"
+      ]
+    },
+    "port": {
+      "type": "integer",
+      "minimum": 1024,
+      "maximum": 65535
+    },
+    "replicaCount": {
+      "type": "integer",
+      "minimum": 0
+    },
     "global": {
       "type": "object",
-      "required": ["env", "provider", "domain"],
+      "required": [
+        "env",
+        "provider",
+        "domain"
+      ],
       "properties": {
-        "env": {"type": "string", "enum": ["dev", "staging", "prod-onprem", "prod-aws", "ci"]},
-        "provider": {"type": "string", "enum": ["onprem", "aws"]},
-        "domain": {"type": "string"}
+        "env": {
+          "type": "string",
+          "enum": [
+            "dev",
+            "staging",
+            "prod-onprem",
+            "prod-aws",
+            "ci"
+          ]
+        },
+        "provider": {
+          "type": "string",
+          "enum": [
+            "onprem",
+            "aws"
+          ]
+        },
+        "domain": {
+          "type": "string"
+        }
       }
     },
     "image": {
       "type": "object",
-      "required": ["registry"],
+      "required": [
+        "registry"
+      ],
       "properties": {
-        "registry": {"type": "string", "minLength": 1},
-        "repository": {"type": "string"},
-        "tag": {"type": "string", "not": {"const": "latest"}},
-        "digest": {"type": "string", "pattern": "^(sha256:[a-f0-9]{64})?$"},
-        "pullPolicy": {"type": "string", "enum": ["Always", "IfNotPresent", "Never"]}
+        "registry": {
+          "type": "string",
+          "minLength": 1
+        },
+        "repository": {
+          "type": "string"
+        },
+        "tag": {
+          "type": "string",
+          "not": {
+            "const": "latest"
+          }
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^(sha256:[a-f0-9]{64})?$"
+        },
+        "pullPolicy": {
+          "type": "string",
+          "enum": [
+            "Always",
+            "IfNotPresent",
+            "Never"
+          ]
+        }
       }
     },
     "images": {
@@ -33,71 +101,182 @@
       "additionalProperties": {
         "type": "object",
         "properties": {
-          "tag": {"type": "string", "not": {"const": "latest"}},
-          "digest": {"type": "string", "pattern": "^(sha256:[a-f0-9]{64})?$"}
+          "tag": {
+            "type": "string",
+            "not": {
+              "const": "latest"
+            }
+          },
+          "digest": {
+            "type": "string",
+            "pattern": "^(sha256:[a-f0-9]{64})?$"
+          }
         }
       }
     },
-    "env": {"type": "object", "additionalProperties": {"type": ["string", "number", "boolean"]}},
+    "env": {
+      "type": "object",
+      "additionalProperties": {
+        "type": [
+          "string",
+          "number",
+          "boolean"
+        ]
+      }
+    },
     "resources": {
       "type": "object",
-      "required": ["requests", "limits"],
+      "required": [
+        "requests",
+        "limits"
+      ],
       "properties": {
-        "requests": {"type": "object", "required": ["cpu", "memory"]},
-        "limits": {"type": "object", "required": ["memory"]}
+        "requests": {
+          "type": "object",
+          "required": [
+            "cpu",
+            "memory"
+          ]
+        },
+        "limits": {
+          "type": "object",
+          "required": [
+            "memory"
+          ]
+        }
       }
     },
     "securityContext": {
       "type": "object",
       "properties": {
-        "privileged": {"const": false},
-        "allowPrivilegeEscalation": {"const": false},
-        "readOnlyRootFilesystem": {"const": true}
+        "privileged": {
+          "const": false
+        },
+        "allowPrivilegeEscalation": {
+          "const": false
+        },
+        "readOnlyRootFilesystem": {
+          "const": true
+        }
       }
     },
     "podSecurityContext": {
       "type": "object",
-      "properties": {"runAsNonRoot": {"const": true}}
+      "properties": {
+        "runAsNonRoot": {
+          "const": true
+        }
+      }
     },
     "rollout": {
       "type": "object",
-      "required": ["enabled"],
+      "required": [
+        "enabled"
+      ],
       "properties": {
-        "enabled": {"type": "boolean"},
-        "trafficRouting": {"type": "string", "enum": ["none", "nginx", "alb"]},
-        "steps": {"type": "array", "minItems": 1},
+        "enabled": {
+          "type": "boolean"
+        },
+        "trafficRouting": {
+          "type": "string",
+          "enum": [
+            "none",
+            "nginx",
+            "alb"
+          ]
+        },
+        "steps": {
+          "type": "array",
+          "minItems": 1
+        },
         "analysis": {
           "type": "object",
           "properties": {
-            "maxErrorRate": {"type": "number", "minimum": 0, "maximum": 1},
-            "maxP95Seconds": {"type": "number", "exclusiveMinimum": 0},
-            "aiopsGate": {"type": "object", "additionalProperties": false, "properties": {"enabled": {"type": "boolean"}, "maxScore": {"type": "number", "exclusiveMinimum": 0, "maximum": 1}, "failureLimit": {"type": "integer", "minimum": 0}}}
+            "maxErrorRate": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "maxP95Seconds": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "aiopsGate": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "maxScore": {
+                  "type": "number",
+                  "exclusiveMinimum": 0,
+                  "maximum": 1
+                },
+                "failureLimit": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              }
+            }
           }
         }
       }
     },
     "autoscaling": {
       "type": "object",
-      "required": ["enabled", "type"],
+      "required": [
+        "enabled",
+        "type"
+      ],
       "properties": {
-        "enabled": {"type": "boolean"},
-        "type": {"type": "string", "enum": ["hpa", "keda"]},
-        "minReplicas": {"type": "integer", "minimum": 1},
-        "maxReplicas": {"type": "integer", "minimum": 1},
+        "enabled": {
+          "type": "boolean"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "hpa",
+            "keda"
+          ]
+        },
+        "minReplicas": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "maxReplicas": {
+          "type": "integer",
+          "minimum": 1
+        },
         "keda": {
           "type": "object",
           "properties": {
-            "rpsPerPod": {"type": "number", "minimum": 0},
-            "predictive": {"type": "boolean"},
+            "rpsPerPod": {
+              "type": "number",
+              "minimum": 0
+            },
+            "predictive": {
+              "type": "boolean"
+            },
             "kafkaLag": {
               "type": "array",
               "items": {
                 "type": "object",
-                "required": ["topic", "consumerGroup"],
+                "required": [
+                  "topic",
+                  "consumerGroup"
+                ],
                 "properties": {
-                  "topic": {"type": "string"},
-                  "consumerGroup": {"type": "string"},
-                  "lagThreshold": {"type": "integer", "minimum": 1}
+                  "topic": {
+                    "type": "string"
+                  },
+                  "consumerGroup": {
+                    "type": "string"
+                  },
+                  "lagThreshold": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
                 }
               }
             }
@@ -108,17 +287,64 @@
     "ingress": {
       "type": "object",
       "properties": {
-        "enabled": {"type": "boolean"},
-        "hostPrefix": {"type": "string"},
-        "className": {"type": "string"}
+        "enabled": {
+          "type": "boolean"
+        },
+        "hostPrefix": {
+          "type": "string"
+        },
+        "className": {
+          "type": "string"
+        }
       }
     },
     "externalSecret": {
       "type": "object",
       "properties": {
-        "enabled": {"type": "boolean"},
-        "keys": {"type": "array", "items": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]*$"}},
-        "sharedKeys": {"type": "array", "items": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]*$"}}
+        "enabled": {
+          "type": "boolean"
+        },
+        "keys": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Z][A-Z0-9_]*$"
+          }
+        },
+        "sharedKeys": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Z][A-Z0-9_]*$"
+          }
+        }
+      }
+    },
+    "featureFlags": {
+      "type": "object",
+      "description": "Feature flag theo lược đồ flagd (OpenFeature)",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "state",
+          "variants",
+          "defaultVariant"
+        ],
+        "properties": {
+          "state": {
+            "enum": [
+              "ENABLED",
+              "DISABLED"
+            ]
+          },
+          "variants": {
+            "type": "object",
+            "minProperties": 1
+          },
+          "defaultVariant": {
+            "type": "string"
+          }
+        }
       }
     }
   }

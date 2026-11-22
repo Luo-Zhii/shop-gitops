@@ -1,0 +1,6 @@
+# Feature flag vận hành (kill switch) theo lược đồ flagd của OpenFeature — Helm render thành ConfigMap <svc>-flags,
+# mount dạng thư mục tại /etc/shopnow/flags (kubelet cập nhật tại chỗ, service đọc lại ≤ 5s, KHÔNG cần restart).
+# MỖI FLAG MỘT DÒNG: tác tử AIOps mở PR đổi đúng defaultVariant của một dòng; cổng xác minh từ chối mọi diff khác.
+featureFlags:
+  recommendations: {state: ENABLED, variants: {"on": true, "off": false}, defaultVariant: "on"}   # gateway → ai-service
+  search-suggest: {state: ENABLED, variants: {"on": true, "off": false}, defaultVariant: "on"}    # search /suggest

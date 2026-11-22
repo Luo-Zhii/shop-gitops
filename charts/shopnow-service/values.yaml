@@ -41,6 +41,8 @@ podLabels: {}
 
 # Biến môi trường không bí mật → ConfigMap <svc>-env.
 env: {}
+# Feature flag vận hành (flagd/OpenFeature) — đặt ở environments/<env>/flags.yaml; rỗng = không render/mount.
+featureFlags: {}
 # Biến thô thêm vào container (valueFrom...).
 extraEnv: []
 

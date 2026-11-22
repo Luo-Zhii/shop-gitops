@@ -106,6 +106,12 @@ spec:
       volumeMounts:
         - name: tmp
           mountPath: /tmp
+        {{- if .Values.featureFlags }}
+        # mount cả thư mục (không subPath) để kubelet cập nhật flags.json tại chỗ khi ConfigMap đổi
+        - name: feature-flags
+          mountPath: /etc/shopnow/flags
+          readOnly: true
+        {{- end }}
         {{- range .Values.extraWritableDirs }}
         - name: {{ .name }}
           mountPath: {{ .mountPath }}
@@ -114,6 +120,11 @@ spec:
     - name: tmp
       emptyDir:
         sizeLimit: {{ .Values.tmpDir.sizeLimit }}
+    {{- if .Values.featureFlags }}
+    - name: feature-flags
+      configMap:
+        name: {{ include "svc.name" . }}-flags
+    {{- end }}
     {{- range .Values.extraWritableDirs }}
     - name: {{ .name }}
       emptyDir:

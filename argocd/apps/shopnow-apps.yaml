@@ -70,6 +70,7 @@ spec:
             - '../../environments/{{ index .metadata.labels "shopnow.io/env" }}/values.yaml'
             - '../../environments/{{ index .metadata.labels "shopnow.io/env" }}/services/{{ .service }}.yaml'
             - '../../environments/{{ index .metadata.labels "shopnow.io/env" }}/images.yaml'
+            - '../../environments/{{ index .metadata.labels "shopnow.io/env" }}/flags.yaml'
       destination:
         name: '{{ .name }}'
         namespace: shopnow
