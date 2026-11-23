@@ -5,3 +5,6 @@ featureFlags:
   recommendations: {state: ENABLED, variants: {"on": true, "off": false}, defaultVariant: "on"}   # gateway → ai-service
   search-suggest: {state: ENABLED, variants: {"on": true, "off": false}, defaultVariant: "on"}    # search /suggest
   llm-assistant: {state: ENABLED, variants: {"on": true, "off": false}, defaultVariant: "on"}     # ai-service: chat/mô tả dùng LLM
+  carrier-ghn: {state: ENABLED, variants: {"on": true, "off": false}, defaultVariant: "on"}       # shipping: tránh hãng GHN cho đơn mới
+  carrier-ghtk: {state: ENABLED, variants: {"on": true, "off": false}, defaultVariant: "on"}      # shipping: tránh hãng GHTK
+  carrier-spx: {state: ENABLED, variants: {"on": true, "off": false}, defaultVariant: "on"}       # shipping: tránh hãng SPX

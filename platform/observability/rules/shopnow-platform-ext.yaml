@@ -195,6 +195,31 @@ spec:
             summary: "SLO {{ $labels.slo }}: theo xu hướng 24h, error budget sẽ cạn sau ~{{ $value | humanize }} giờ"
             runbook: "Xem /admin/aiops → SLO; cân nhắc đóng băng thay đổi không khẩn cấp và ưu tiên sửa lỗi độ tin cậy"
     # DevSecOps: SLA vá lỗ hổng của workload ĐANG CHẠY (Trivy Operator → AIOps /security/vulns)
+    - name: shopnow-carriers
+      rules:
+        # SLO đối tác vận chuyển — lỗi của BÊN THỨ BA: không mở sự cố AIOps (RCA sẽ đi tìm lỗi trong code mình), báo đội vận hành
+        # giao hàng làm việc với hãng; service shipping đã tự tránh hãng xuống cấp cho đơn mới.
+        - alert: CarrierOnTimeBelowSLO
+          expr: shipping_carrier_on_time_ratio < 0.85
+          for: 2h
+          labels: {severity: warning, category: partner}
+          annotations:
+            summary: "Hãng {{ $labels.carrier }} giao đúng hạn {{ $value | humanizePercentage }} (7 ngày) — dưới SLO 85%"
+            runbook: "Xem /admin/shipping; làm việc với hãng; cần dừng hẳn thì tắt flag carrier-<mã> qua PR GitOps"
+        - alert: CarrierWebhookSilent
+          expr: shipping_carrier_webhook_age_seconds > 6 * 3600 and on (carrier) shipping_carrier_active_shipments > 0
+          for: 30m
+          labels: {severity: warning, category: partner}
+          annotations:
+            summary: "Hãng {{ $labels.carrier }} im lặng {{ $value | humanizeDuration }} dù còn vận đơn đang chạy — tích hợp webhook có thể hỏng"
+            runbook: "Kiểm tra chữ ký/endpoint webhook với hãng; khách đang không thấy trạng thái giao hàng"
+        - alert: CarrierStuckShipments
+          expr: shipping_carrier_stuck_shipments > 20
+          for: 1h
+          labels: {severity: info, category: partner}
+          annotations:
+            summary: "{{ $value }} vận đơn của {{ $labels.carrier }} không đổi trạng thái quá 48 giờ"
+            runbook: "Xuất danh sách cho hãng tra soát; CSKH chủ động báo khách trước khi khách khiếu nại"
     - name: shopnow-toil
       rules:
         # gauge cập nhật mỗi lần AIOps lập báo cáo tự động hoá (ít nhất mỗi sáng qua CronJob bản tin bàn giao ca)

@@ -20,7 +20,7 @@ alertmanager:
         # 0) Cảnh báo QUY TRÌNH giao phần mềm (DORA) → ticket cho người trực, KHÔNG vào AIOps: không phải sự cố runtime,
         #    nếu vào sẽ tự tạo "sự cố" và làm bẩn chính MTTR/CFR mà nó đo.
         - receiver: telegram-warning
-          matchers: ['category =~ "delivery|finops|security"']   # finops/security: ngân sách, SLA vá lỗ hổng — không phải sự cố runtime
+          matchers: ['category =~ "delivery|finops|security|partner"']   # finops/security/partner: ngân sách, SLA vá lỗ hổng, hãng vận chuyển — không phải sự cố runtime của mình
           group_by: [alertname, environment]
           repeat_interval: 24h
         # 1) AIOps nhận MỌI alert critical/warning (cả resolved) để tính MTTD/MTTR và RCA
