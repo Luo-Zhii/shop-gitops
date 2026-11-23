@@ -195,6 +195,16 @@ spec:
             summary: "SLO {{ $labels.slo }}: theo xu hướng 24h, error budget sẽ cạn sau ~{{ $value | humanize }} giờ"
             runbook: "Xem /admin/aiops → SLO; cân nhắc đóng băng thay đổi không khẩn cấp và ưu tiên sửa lỗi độ tin cậy"
     # DevSecOps: SLA vá lỗ hổng của workload ĐANG CHẠY (Trivy Operator → AIOps /security/vulns)
+    - name: shopnow-toil
+      rules:
+        # gauge cập nhật mỗi lần AIOps lập báo cáo tự động hoá (ít nhất mỗi sáng qua CronJob bản tin bàn giao ca)
+        - alert: ToilOverBudget
+          expr: aiops_toil_share > 0.5
+          for: 1h
+          labels: {severity: info, category: delivery}
+          annotations:
+            summary: "Toil chiếm {{ $value | humanizePercentage }} giờ trực 28 ngày qua — vượt ngân sách SRE 50%"
+            runbook: "Xem /admin/aiops → Tự động hoá: duyệt bản vá bỏ duyệt tay cho luật đủ thành tích, viết luật cho nhóm sự cố lặp"
     - name: shopnow-vuln-sla
       rules:
         - alert: VulnerabilitySlaBreach
