@@ -14,6 +14,7 @@ resources:
   - ../../../platform/data/opensearch
   - ../../../platform/data/onprem-objectstore
   - ../../../platform/observability
+  - ../../../platform/security
   - ../../../platform/slo
 configMapGenerator:
   - name: cluster-info

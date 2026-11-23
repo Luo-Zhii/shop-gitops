@@ -6,4 +6,5 @@ resources:
   - rules/shopnow-platform-ext.yaml
   - oncall-digest-cronjob.yaml
   - oncall-escalate-cronjob.yaml
+  - vuln-sync-cronjob.yaml
   - capacity-forecast-cronjob.yaml

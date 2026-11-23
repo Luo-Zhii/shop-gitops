@@ -10,6 +10,7 @@ resources:
   - ../../../platform/data/mongodb
   - ../../../platform/data/opensearch
   - ../../../platform/observability
+  - ../../../platform/security
   - ../../../platform/slo
 configMapGenerator:
   - name: cluster-info

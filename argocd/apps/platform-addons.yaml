@@ -39,6 +39,7 @@ spec:
                 - {addon: opencost, chart: opencost, repoURL: 'https://opencost.github.io/opencost-helm-chart', version: '2.5.34', namespace: opencost, wave: '-6', valuesDir: platform/addons/opencost, extraValues: []}
                 - {addon: pyroscope, chart: pyroscope, repoURL: 'https://grafana.github.io/helm-charts', version: '2.4.3', namespace: observability, wave: '-6', valuesDir: platform/addons/pyroscope, extraValues: []}
                 - {addon: alloy-profiling, chart: alloy, repoURL: 'https://grafana.github.io/helm-charts', version: '1.15.0', namespace: observability, wave: '-5', valuesDir: platform/addons/alloy-profiling, extraValues: []}
+                - {addon: trivy-operator, chart: trivy-operator, repoURL: 'https://aquasecurity.github.io/helm-charts', version: '0.38.1', namespace: trivy-system, wave: '-6', valuesDir: platform/addons/trivy-operator, extraValues: []}
     # --- Chỉ on-prem (provider=onprem)
     - matrix:
         generators:

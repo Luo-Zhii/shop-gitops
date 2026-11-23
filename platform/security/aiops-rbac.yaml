@@ -1,0 +1,31 @@
+# Quyền CHỈ ĐỌC cho AIOps trong namespace shopnow: công cụ tác tử recent_deployments/pod_health (ReplicaSet, Pod,
+# Deployment, Rollout) và đọc báo cáo lỗ hổng của Trivy Operator. Không có quyền ghi → khắc phục chỉ đi qua PR GitOps.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: aiops-readonly
+  namespace: shopnow
+  labels: {app.kubernetes.io/part-of: shopnow}
+rules:
+  - apiGroups: [""]
+    resources: [pods]
+    verbs: [get, list, watch]
+  - apiGroups: [apps]
+    resources: [replicasets, deployments]
+    verbs: [get, list, watch]
+  - apiGroups: [argoproj.io]
+    resources: [rollouts]
+    verbs: [get, list, watch]
+  - apiGroups: [aquasecurity.github.io]
+    resources: [vulnerabilityreports]
+    verbs: [get, list]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: aiops-readonly
+  namespace: shopnow
+  labels: {app.kubernetes.io/part-of: shopnow}
+roleRef: {apiGroup: rbac.authorization.k8s.io, kind: Role, name: aiops-readonly}
+subjects:
+  - {kind: ServiceAccount, name: aiops, namespace: shopnow}

@@ -21,6 +21,9 @@ env:
   ACCOUNTING_URL: http://accounting     # kiểm toán sổ cái /audit/ledger
   GITOPS_REPO: Luo-Zhii/shop-gitops     # tác tử mở PR khắc phục (fine-grained token: contents+pull_requests)
   GITOPS_ENV: dev
+  KUBE_ENABLED: "true"                # đọc cụm qua Role aiops-readonly (platform/security) — không có quyền ghi
+serviceAccount:
+  automountToken: true                # cần token để gọi Kubernetes API (Role chỉ đọc)
 autoscaling:
   enabled: false
 replicaCount: 1
@@ -37,6 +40,10 @@ networkPolicy:
       - to:
           - namespaceSelector: {matchLabels: {kubernetes.io/metadata.name: observability}}
         ports: [{port: 80, protocol: TCP}, {port: 3100, protocol: TCP}, {port: 3200, protocol: TCP}, {port: 4040, protocol: TCP}]
+      # kube-apiserver: Service kubernetes.default:443 được DNAT sang 6443 và CNI (Calico/Cilium) xét policy SAU DNAT
+      - to:
+          - ipBlock: {cidr: 0.0.0.0/0}
+        ports: [{port: 6443, protocol: TCP}]
 resources:
   requests: {cpu: 200m, memory: 512Mi}
   limits: {cpu: "2", memory: 1536Mi}

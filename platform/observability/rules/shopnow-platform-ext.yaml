@@ -194,3 +194,13 @@ spec:
           annotations:
             summary: "SLO {{ $labels.slo }}: theo xu hướng 24h, error budget sẽ cạn sau ~{{ $value | humanize }} giờ"
             runbook: "Xem /admin/aiops → SLO; cân nhắc đóng băng thay đổi không khẩn cấp và ưu tiên sửa lỗi độ tin cậy"
+    # DevSecOps: SLA vá lỗ hổng của workload ĐANG CHẠY (Trivy Operator → AIOps /security/vulns)
+    - name: shopnow-vuln-sla
+      rules:
+        - alert: VulnerabilitySlaBreach
+          expr: max by (severity) (aiops_vuln_sla_breaches) > 0
+          for: 1h
+          labels: {severity: warning, category: security}
+          annotations:
+            summary: "{{ $value }} lỗ hổng {{ $labels.severity }} đã có bản sửa nhưng quá hạn SLA vá (CRITICAL 7 ngày, HIGH 30 ngày)"
+            runbook: "Xem /admin/aiops → Bảo mật; nâng phiên bản gói/base image, build lại qua CI (Trivy + ký + SLSA)"

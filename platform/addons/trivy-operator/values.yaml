@@ -1,0 +1,16 @@
+# Quét LIÊN TỤC workload đang chạy (CI chỉ quét lúc build; CVE mới công bố sau khi deploy thì không ai biết).
+# Kết quả: CRD VulnerabilityReport theo từng container → AIOps (/security/vulns) đo SLA khắc phục lỗ hổng.
+targetNamespaces: shopnow
+operator:
+  scanJobsConcurrentLimit: 2          # máy/cụm nhỏ: tối đa 2 job quét song song (tránh tràn RAM node)
+  scanJobTTL: 10m
+  vulnerabilityScannerEnabled: true
+  sbomGenerationEnabled: false        # SBOM đã sinh + ký ở CI (Syft, attest) — không làm lại
+  configAuditScannerEnabled: false    # cấu hình đã có Kyverno chặn ở admission
+  rbacAssessmentScannerEnabled: false
+  infraAssessmentScannerEnabled: false
+  clusterComplianceEnabled: false
+  exposedSecretScannerEnabled: true
+trivy:
+  severity: HIGH,CRITICAL             # SLA chỉ áp cho HIGH/CRITICAL — bớt dữ liệu, bớt tài nguyên
+  ignoreUnfixed: false                # vẫn ghi lỗ hổng chưa có bản sửa (AIOps tách riêng, không tính vi phạm SLA)
