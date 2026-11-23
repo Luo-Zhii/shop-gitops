@@ -204,3 +204,11 @@ spec:
           annotations:
             summary: "{{ $value }} lỗ hổng {{ $labels.severity }} đã có bản sửa nhưng quá hạn SLA vá (CRITICAL 7 ngày, HIGH 30 ngày)"
             runbook: "Xem /admin/aiops → Bảo mật; nâng phiên bản gói/base image, build lại qua CI (Trivy + ký + SLSA)"
+        # CISA KEV: lỗ hổng ĐANG bị khai thác ngoài thực tế trên workload đang chạy — báo ngay, không đợi quá hạn SLA
+        - alert: KnownExploitedVulnerabilityRunning
+          expr: aiops_vuln_kev_open > 0
+          for: 30m
+          labels: {severity: warning, category: security}
+          annotations:
+            summary: "{{ $value }} lỗ hổng trong danh mục CISA KEV đang chạy trên production (hạn vá 3 ngày từ lúc vào KEV)"
+            runbook: "Xem /admin/aiops → Bảo mật (P1); chưa có bản sửa → biện pháp tạm: chặn đường vào ở gateway/NetworkPolicy, tắt tính năng bằng kill switch flagd"
