@@ -195,6 +195,23 @@ spec:
             summary: "SLO {{ $labels.slo }}: theo xu hướng 24h, error budget sẽ cạn sau ~{{ $value | humanize }} giờ"
             runbook: "Xem /admin/aiops → SLO; cân nhắc đóng băng thay đổi không khẩn cấp và ưu tiên sửa lỗi độ tin cậy"
     # DevSecOps: SLA vá lỗ hổng của workload ĐANG CHẠY (Trivy Operator → AIOps /security/vulns)
+    - name: shopnow-warehouse-accuracy
+      rules:
+        # độ chính xác tồn kho: báo không thấy hàng tại kệ dồn dập = số hệ thống sai hàng loạt (nhập sai kệ, mất hàng, lỗi đồng bộ)
+        - alert: WarehousePickNotFoundSpike
+          expr: sum by (warehouse) (increase(warehouse_pick_exceptions_total[1h])) > 5
+          for: 15m
+          labels: {severity: warning, category: delivery}
+          annotations:
+            summary: "Kho {{ $labels.warehouse }}: {{ $value | humanize }} lần báo không thấy hàng tại kệ trong 1 giờ"
+            runbook: "Xem /admin/warehouse → Kiểm kê → Kiểm kê đột xuất; rà phiếu nhập gần nhất (cất sai kệ?) và lệch tồn với inventory"
+        - alert: WarehouseSpotCountsPiling
+          expr: warehouse_spot_counts_open > 20
+          for: 2h
+          labels: {severity: info, category: delivery}
+          annotations:
+            summary: "{{ $value }} phiếu kiểm kê đột xuất đang chờ đếm"
+            runbook: "Bố trí người đếm; SKU có vấn đề còn sai số cho tới khi phiếu được đếm và duyệt"
     - name: shopnow-carriers
       rules:
         # SLO đối tác vận chuyển — lỗi của BÊN THỨ BA: không mở sự cố AIOps (RCA sẽ đi tìm lỗi trong code mình), báo đội vận hành
