@@ -1,0 +1,35 @@
+# Leo thang trực sự cố: mỗi 2 phút gọi AIOps — sự cố mở chưa ai nhận quá 15 phút → báo người trực phụ (một lần/sự cố).
+# Đặt ở namespace monitoring: NetworkPolicy của aiops đã mở cho namespace này (Alertmanager) và dùng chung token webhook.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: oncall-escalate
+  namespace: monitoring
+  labels: {app.kubernetes.io/name: oncall-escalate, app.kubernetes.io/part-of: shopnow}
+spec:
+  schedule: "*/2 * * * *"
+  timeZone: Etc/UTC
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      activeDeadlineSeconds: 60
+      template:
+        metadata:
+          labels: {app.kubernetes.io/name: oncall-escalate}
+        spec:
+          restartPolicy: Never
+          securityContext: {runAsNonRoot: true, runAsUser: 100, seccompProfile: {type: RuntimeDefault}}
+          containers:
+            - name: escalate
+              image: curlimages/curl:8.11.1
+              args: ["-fsS", "-X", "POST", "-H", "Authorization: Bearer $(TOKEN)", "http://aiops.shopnow.svc:8120/oncall/escalate"]
+              env:
+                - name: TOKEN
+                  valueFrom: {secretKeyRef: {name: alertmanager-shopnow, key: aiops-webhook-token}}
+              resources:
+                requests: {cpu: 10m, memory: 16Mi}
+                limits: {cpu: 100m, memory: 32Mi}
+              securityContext: {allowPrivilegeEscalation: false, readOnlyRootFilesystem: true, capabilities: {drop: [ALL]}}
